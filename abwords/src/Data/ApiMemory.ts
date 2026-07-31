@@ -113,7 +113,7 @@ export class ApiMemory {
 
 
     RenderGameReport = async (token: string): Promise<IGameReport> => {
-        const url = 'https://localhost:7168/api/WordReport/wordreport';
+        const url = SiteVars.mainApiUrl + 'WordReport/wordreport';
         const config = {
             headers: {'Authorization': `Bearer ${token}`
             }

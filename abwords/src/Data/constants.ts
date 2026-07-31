@@ -5,15 +5,17 @@ export interface IConstant {
     mainApiUrl: string,
 }
 const siteObjectsDev:IConstant = {
-    mainApiUrl: "https://localhost:7168/api/"
+    mainApiUrl: import.meta.env.VITE_REACT_API_URL
     //mainApiUrl: "/demodata/"
 }
 
 const siteObjectsProd:IConstant = {
-    mainApiUrl: "https://beliaeff.ru/api/"
+    mainApiUrl: import.meta.env.VITE_REACT_API_URL
 }
 console.log('t', import.meta.env )
 export const SiteVars: IConstant = (import.meta.env.VITE_APP_ENV === "dev") ? siteObjectsDev : siteObjectsProd
+console.log('SiteVars', SiteVars )
+
 
 export const modalStyle = {
     position: 'absolute',
