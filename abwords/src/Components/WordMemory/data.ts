@@ -7,7 +7,8 @@ export interface IWord {
 export const WordEmpty: IWord = {
     id: 0,
     translate1: '',
-    translate2: '',
+    translate2: ''
+
 }
 export interface IWordsResponse {
     words: IWord[],

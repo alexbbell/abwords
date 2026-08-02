@@ -2,7 +2,7 @@ import { SiteVars } from "./constants"
 import { ICountDown } from "./interfaces"
 import axios from "axios"
 import { parseJwt } from "../Helpers/AuthFunc"
-import { IAnswer, IGameReport,  IWordsResponse } from "../Components/WordMemory/data"
+import { IAnswer, IGameReport,  IWord,  IWordsResponse } from "../Components/WordMemory/data"
 
 
 export interface IWordHistory {
@@ -88,15 +88,14 @@ export class ApiMemory {
         })
     }
 
-
-    GetWordsFromCollection = async (colId: number, token: string): Promise<IWordsResponse> => {
+GetWordsFromCollection = async (colId: number, token: string): Promise<IWordsResponse> => {
     const url = `${this._apiUrl}Word/collections/${colId}`;
 
     try {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`, // Adjust token access (e.g., this._token, localStorage, etc.)
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -104,24 +103,34 @@ export class ApiMemory {
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-
+        
         const data = await response.json();
 
+        // 1. Target the collection object (handles root array or root wrapper)
+        const collectionObj = Array.isArray(data) 
+            ? data[0] 
+            : data?.words?.[0] ?? data?.Words?.[0];
+
+        // 2. Extract the words list with fallback for casing differences
+        const wordsList = collectionObj?.WordsCollection 
+                       ?? collectionObj?.wordsCollection 
+                       ?? [];
+
+        console.log('Extracted words list:', wordsList);
+
         return {
-            words: data[0]?.WordsCollection ?? [],
+            words: wordsList,
         };
     } catch (err: any) {
         console.error(err);
         
-        // Throwing inside an async function automatically returns a rejected Promise
-        throw {
+        return {
             words: [],
             isError: true,
-            errorText: err?.message || err || 'Error parsing the response',
+            errorText: err?.message || 'Error parsing response',
         };
     }
 };
-
 
     RenderGameReport = async (token: string): Promise<IGameReport> => {
         const url = SiteVars.mainApiUrl + 'WordReport/wordreport';

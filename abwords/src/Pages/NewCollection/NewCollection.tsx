@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -16,39 +16,94 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { SiteVars } from '../../Data/constants';
 import { ITokens } from '../../Data/interfaces';
 
 export interface WordItem {
+  id?: number | string;
   translate1: string;
   translate2: string;
   translate3?: string;
 }
 
-export interface CreateCollectionDto {
-  title: string;
-  words: WordItem[];
+export interface CollectionResponseDto {
+  Id?: number;
+  Title?: string;
+  title?: string;
+  WordsCollection?: WordItem[];
+  words?: WordItem[];
 }
 
-const API_URL = SiteVars.mainApiUrl
+const API_URL = SiteVars.mainApiUrl;
+
 type Props = {
-    isNew: boolean
-}
+  isNew: boolean;
+};
 
-export const NewCollection: React.FC<Props> = ({ isNew} ) => {
+export const NewCollection: React.FC<Props> = ({ isNew }) => {
   const navigate = useNavigate();
-  
+  const { id } = useParams<{ id: string }>();
+
   const isTokenStr: string = localStorage.getItem('tokens') ?? '{}';
   const tokens: ITokens = JSON.parse(isTokenStr);
 
   const [title, setTitle] = useState<string>('');
   const [words, setWords] = useState<WordItem[]>([
-    { translate1: '', translate2: '', translate3: '' },
+    { id: crypto.randomUUID(), translate1: '', translate2: '', translate3: '' },
   ]);
 
   const [loading, setLoading] = useState<boolean>(false);
+  const [initialFetchLoading, setInitialFetchLoading] = useState<boolean>(!isNew);
   const [error, setError] = useState<string | null>(null);
+
+  // Load existing collection when editing
+  useEffect(() => {
+    if (isNew || !id) return;
+
+    const fetchCollection = async () => {
+      try {
+        setInitialFetchLoading(true);
+        const response = await fetch(`${API_URL}word/collections/${id}`, {
+          headers: {
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: Failed to load collection details`);
+        }
+
+        const data: CollectionResponseDto[] | CollectionResponseDto = await response.json();
+        
+        // Handle array response structure [ { WordsCollection: [...], Title: "..." } ]
+        const collection = Array.isArray(data) ? data[0] : data;
+
+        if (!collection) {
+          throw new Error('Collection data not found.');
+        }
+
+        setTitle(collection.Title || collection.title || '');
+        
+        const rawWords = collection.WordsCollection || collection.words || [];
+        
+        if (rawWords.length > 0) {
+          setWords(
+            rawWords.map((w) => ({
+              ...w,
+              id: w.id ?? crypto.randomUUID(),
+            }))
+          );
+        }
+      } catch (err: any) {
+        setError(err.message || 'Failed to fetch collection details.');
+      } finally {
+        setInitialFetchLoading(false);
+      }
+    };
+
+    fetchCollection();
+  }, [id, isNew, tokens.accessToken]);
 
   // Form Field Handlers
   const handleWordChange = (
@@ -57,12 +112,15 @@ export const NewCollection: React.FC<Props> = ({ isNew} ) => {
     value: string
   ) => {
     const updatedWords = [...words];
-    updatedWords[index][field] = value;
+    updatedWords[index] = { ...updatedWords[index], [field]: value };
     setWords(updatedWords);
   };
 
   const handleAddWord = () => {
-    setWords([...words, { translate1: '', translate2: '', translate3: '' }]);
+    setWords([
+      ...words,
+      { id: crypto.randomUUID(), translate1: '', translate2: '', translate3: '' },
+    ]);
   };
 
   const handleRemoveWord = (index: number) => {
@@ -71,12 +129,11 @@ export const NewCollection: React.FC<Props> = ({ isNew} ) => {
     setWords(updatedWords);
   };
 
-  // Form Submission
+  // Form Submission (Create or Edit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Basic Validation
     if (!title.trim()) {
       setError('Please provide a title for the collection.');
       return;
@@ -91,27 +148,34 @@ export const NewCollection: React.FC<Props> = ({ isNew} ) => {
       return;
     }
 
-    const payload: CreateCollectionDto = {
+    const payload = {
       title: title.trim(),
       words: validWords,
     };
 
+    const targetUrl = isNew
+      ? `${API_URL}word/collections`
+      : `${API_URL}word/collections/${id}`;
+
+    const method = isNew ? 'POST' : 'PUT';
+
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}word/collections`, {
-        method: 'POST',
+      const response = await fetch(targetUrl, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokens.accessToken}`
+          Authorization: `Bearer ${tokens.accessToken}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: Failed to save collection`);
+        throw new Error(
+          `Error ${response.status}: Failed to ${isNew ? 'create' : 'update'} collection`
+        );
       }
 
-      // Navigate back to collections list on success
       navigate('/');
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred while saving.');
@@ -119,6 +183,14 @@ export const NewCollection: React.FC<Props> = ({ isNew} ) => {
       setLoading(false);
     }
   };
+
+  if (initialFetchLoading) {
+    return (
+      <Container maxWidth="md" sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -128,7 +200,7 @@ export const NewCollection: React.FC<Props> = ({ isNew} ) => {
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="h4" component="h1" fontWeight="bold">
-          Create New Collection
+          {isNew ? 'Create New Collection' : 'Edit Collection'}
         </Typography>
       </Box>
 
@@ -159,7 +231,7 @@ export const NewCollection: React.FC<Props> = ({ isNew} ) => {
           <Stack spacing={2} mb={3}>
             {words.map((item, index) => (
               <Box
-                key={index}
+                key={item.id || index}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -231,7 +303,7 @@ export const NewCollection: React.FC<Props> = ({ isNew} ) => {
               }
               disabled={loading}
             >
-              {loading ? 'Saving...' : 'Save Collection'}
+              {loading ? 'Saving...' : isNew ? 'Save Collection' : 'Update Collection'}
             </Button>
           </Box>
         </Box>

@@ -39,7 +39,6 @@ export const LoginPage = () => {
                         <LoginForm />
                         :
                         <>
-                            <h1>Page for authenticated</h1>
                             <Dashboard />
 
                         </>

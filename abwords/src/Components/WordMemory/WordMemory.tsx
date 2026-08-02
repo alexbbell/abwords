@@ -132,7 +132,8 @@ export const WordMemory:React.FC<Props> = ( { collectionId } ) => {
 
     const InitialWordLoad = async () => {
         try {
-            const res = await api.GetWordsFromCollection(selectedCollection?.id??1, tokens.accessToken);
+            const res = await api.GetWordsFromCollection(selectedCollection?.id??2, tokens.accessToken);
+            console.log('res', res)
             setItems(res.words);
             return res.words;
         } catch (err) {
@@ -148,38 +149,73 @@ export const WordMemory:React.FC<Props> = ( { collectionId } ) => {
         setCWord(item);
     };
 
-    React.useEffect(() => {
-        const initData = async () => {
-            try {
-                const loadedWords = await InitialWordLoad();
-                const timerStatus = await GetTimer();
-                
-                if (timerStatus === 'timeis' && loadedWords.length > 0) {
-                    SetWordCombination(loadedWords);
-                } else {
-                    setTimerOut(true);
-                    setIsDisabled(true);
-                }
-            } catch (error) {
-                console.error('Initialization error:', error);
+React.useEffect(() => {
+    let isMounted = true;
+
+    const initData = async () => {
+        try {
+            const targetColId = selectedCollection?.id ?? collectionId ?? 2;
+            const res = await api.GetWordsFromCollection(targetColId, tokens.accessToken);
+            
+            if (!isMounted) return;
+
+            const loadedWords = res.words ?? [];
+            setItems(loadedWords);
+
+            const timerStatus = await GetTimer();
+            if (!isMounted) return;
+
+            if (timerStatus === 'timeis' && loadedWords.length > 0) {
+                SetWordCombination(loadedWords);
+            } else {
                 setTimerOut(true);
                 setIsDisabled(true);
             }
-            setIsLoaded(true);
-        };
-        initData();
-    }, []);
-
-    const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[] => {
-        const allVariants: IWordButton[] = [{ ...correctItem } as IWordButton];
-        while (allVariants.length < 4 && allItems.length >= 4) {
-            const newValue = allItems[Math.floor(Math.random() * allItems.length)];
-            if (!allVariants.find(x => x.id === newValue.id)) {
-                allVariants.push({ ...newValue } as IWordButton);
+        } catch (error) {
+            console.error('Initialization error:', error);
+            if (isMounted) {
+                setTimerOut(true);
+                setIsDisabled(true);
             }
+        } finally {
+            if (isMounted) setIsLoaded(true);
         }
-        return arFuncs.shuffleArray(allVariants);
     };
+
+    initData();
+
+    return () => {
+        isMounted = false; // Prevent state updates on unmounted components
+    };
+}, [selectedCollection?.id, collectionId]);
+
+const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[] => {
+    const allVariants: IWordButton[] = [{ ...correctItem } as IWordButton];
+    
+    // Safety check: if total unique items < 4, don't enter endless loop
+    if (allItems.length < 4) {
+        return allItems.map(item => ({ ...item } as IWordButton));
+    }
+
+    let attempts = 0;
+    const maxAttempts = 100; // Prevent main thread locks
+
+    while (allVariants.length < 4 && attempts < maxAttempts) {
+        attempts++;
+        const candidate = allItems[Math.floor(Math.random() * allItems.length)];
+        
+        // Match on translate1 / translate2 string instead of id: 0
+        const isDuplicate = allVariants.some(
+            v => v.translate1 === candidate.translate1 && v.translate2 === candidate.translate2
+        );
+
+        if (!isDuplicate) {
+            allVariants.push({ ...candidate } as IWordButton);
+        }
+    }
+
+    return arFuncs.shuffleArray(allVariants);
+};
 
     const handleAnswerClick = (word: IWordButton, index: number) => {
         if (isDisabled || timerOut) return;
