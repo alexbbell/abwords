@@ -52,10 +52,10 @@ export class ApiMemory {
                 .then(res => res.json())
                 .then(result => {
                     if(result === '0001-01-01T00:00:00') reject( { endTime: ''})
-                    resolve({ endtime: result })
+                    resolve({ endTime: result })
                 }).catch(err => {
                 console.error(err)
-                reject( { endtime: ''})
+                reject( { endTime: ''})
             })
         })
     }
@@ -79,7 +79,7 @@ export class ApiMemory {
             }
             fetch(this._wordHistoryUrl, requestOptions)
                 //.then(res => res.json())
-                .then(result => {
+                .then(() => {
                     resolve('Ok')
                 }).catch(err => {
                 console.error(err)
@@ -89,27 +89,38 @@ export class ApiMemory {
     }
 
 
-    GetWordsFromCollection = async (colId: number): Promise<IWordsResponse> => {
-        const url = `${this._apiUrl}Word/collections/${colId}`
+    GetWordsFromCollection = async (colId: number, token: string): Promise<IWordsResponse> => {
+    const url = `${this._apiUrl}Word/collections/${colId}`;
 
-        return new Promise<IWordsResponse>((resolve, reject) => {
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`, // Adjust token access (e.g., this._token, localStorage, etc.)
+                'Content-Type': 'application/json',
+            },
+        });
 
-            axios(url)
-                .then(result => {
-                    try {
-                        const t: IWordsResponse = {
-                            words: result.data[0].WordsCollection,
-                        }
-                        resolve(t)
-                    } catch {
-                        reject({ words: [], isError: true, errorText: 'Error parsing the response' })
-                    }
-                }).catch(err => {
-                    console.error(err)
-                    reject({ words: [], isError: true, errorText: err })
-                })
-        })
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        return {
+            words: data[0]?.WordsCollection ?? [],
+        };
+    } catch (err: any) {
+        console.error(err);
+        
+        // Throwing inside an async function automatically returns a rejected Promise
+        throw {
+            words: [],
+            isError: true,
+            errorText: err?.message || err || 'Error parsing the response',
+        };
     }
+};
 
 
     RenderGameReport = async (token: string): Promise<IGameReport> => {

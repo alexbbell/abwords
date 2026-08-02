@@ -1,5 +1,5 @@
 // @flow
-import { Avatar, Box, Button, IconButton, Link, Menu, MenuItem, Modal, Tooltip } from '@mui/material';
+import { Avatar, Box, Button, IconButton, Link, Menu, MenuItem, Tooltip } from '@mui/material';
 import AppBar from '@mui/material/AppBar/AppBar';
 import Container from '@mui/material/Container/Container';
 import Toolbar from '@mui/material/Toolbar/Toolbar';
@@ -14,10 +14,8 @@ type Links = {
   Title: string,
   Url: string
 }
-type Props = {
 
-};
-export const Header = (props: Props) => {
+export const Header = () => {
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
     const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
     const navigate = useNavigate();
@@ -32,14 +30,16 @@ export const Header = (props: Props) => {
         setAnchorElNav(null);
     };
 
-    const [open, setOpen] = React.useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
+    // const [open, setOpen] = React.useState(false);
+    // const handleOpen = () => setOpen(true);
+    // const handleClose = () => setOpen(false);
 
     const items: Links[] = [
        { Title: 'Home', Url: '/' },
-       { Title: 'Blog', Url: '/dashboard' },
-       { Title: 'Word memory', Url: '/memory' },
+       { Title: 'Dashboard', Url: '/dashboard' },
+       { Title: 'Word Memory', Url: '/memory' },
+       
+       { Title: 'Login', Url: '/login' },
        { Title: 'About', Url: '/about' }
     ]
     const settings = ['Profile', 'Account', 'Dashboard', 'Logout'] as const;

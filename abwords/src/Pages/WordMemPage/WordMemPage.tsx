@@ -1,5 +1,4 @@
 // @flow
-
 import { WordMemory } from '../../Components/WordMemory/WordMemory';
 import { parseJwt } from '../../Helpers/AuthFunc';
 import { ITokens } from '../../Data/interfaces';
@@ -13,7 +12,7 @@ export const WordMemPage = () => {
 
     return (
         <div>
-            <WordMemory />
+            <WordMemory collectionId={1} />
         </div>
     );
 };

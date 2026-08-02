@@ -1,44 +1,41 @@
-import { combineReducers, configureStore } from '@reduxjs/toolkit'
-import { counterSlice } from './counterSlice'
-import { answerSlice } from './answerSlice'
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
-import { persistStore, persistReducer,  FLUSH,
-  REHYDRATE,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER
-
-} from 'redux-persist'
-import storage from 'redux-persist/lib/storage' // defaults to localStorage for web
-
-const persistConfig = {
-  key: 'root',
-  storage,
+// 1. Define combined state & action types
+interface CounterSlice {
+  counter: number
+  increment: () => void
+  decrement: () => void
 }
 
+interface AnswerSlice {
+  answers: Record<string, any>
+  setAnswer: (key: string, value: any) => void
+  resetAnswers: () => void
+}
 
-const rootReducer = combineReducers( {
-  answers: answerSlice.reducer,
-  counter: counterSlice.reducer
-})
-const persistedReducer = persistReducer(persistConfig, rootReducer)
+type StoreState = CounterSlice & AnswerSlice
 
-const store = configureStore({
-  reducer: persistedReducer,
+// 2. Create the persisted store
+export const useStore = create<StoreState>()(
+  persist(
+    (set) => ({
+      // --- Counter Slice ---
+      counter: 0,
+      increment: () => set((state) => ({ counter: state.counter + 1 })),
+      decrement: () => set((state) => ({ counter: state.counter - 1 })),
 
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-        serializableCheck: {
-            ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-        },
+      // --- Answer Slice ---
+      answers: {},
+      setAnswer: (key, value) =>
+        set((state) => ({
+          answers: { ...state.answers, [key]: value },
+        })),
+      resetAnswers: () => set({ answers: {} }),
     }),
-})
-
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<typeof rootReducer>
-// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
-export type AppDispatch = typeof store.dispatch
-
-export const persistor = persistStore(store)
-export default store;
+    {
+      name: 'root', // Key in localStorage (replaces persistConfig.key)
+      storage: createJSONStorage(() => localStorage), // Defaults to localStorage
+    }
+  )
+)

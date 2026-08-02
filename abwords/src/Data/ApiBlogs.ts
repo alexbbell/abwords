@@ -1,6 +1,5 @@
-import { error } from "console"
 import { SiteVars } from "./constants"
-import { IAccount, IAuthResponse, IBaseItem, IBlog, IBlogReponse, IMoveFiles, IOperationResult } from "./interfaces"
+import { IBaseItem, IBlog, IBlogReponse, IMoveFiles, IOperationResult } from "./interfaces"
 import axios from "axios"
 
 export class ApiBlogServices {

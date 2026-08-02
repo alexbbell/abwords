@@ -62,5 +62,5 @@ export interface IOperationResult {
 }
 
 export interface ICountDown {
-    endtime: string,
+    endTime: string,
 }

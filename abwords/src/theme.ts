@@ -73,7 +73,9 @@ export const theme = createTheme({
                     margin: 0
                 },
                 paper: {
-                    backgroundImage: 'none', background: '#000', color: '#FFF',
+                    backgroundImage: 'none', 
+                    background: '#FFF',
+                    color: '#999',
                     padding:  0
                 }
             }
@@ -116,3 +118,14 @@ export const dialogTheme: SxProps<Theme>  = {
      color: '#FFF'
 }
 
+export const mainBoxStyles: SxProps<Theme> = {
+  minHeight: '100vh',
+  display: 'flex',
+  flexDirection: 'column',
+  
+  alignItems: 'flex-start', // Note: standard CSS value is 'flex-start' instead of 'start'
+  justifyContent: 'start',
+  bgcolor: 'background.default',
+  py: { xs: 4, md: 8 },
+  px: 2,
+};

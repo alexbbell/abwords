@@ -1,10 +1,10 @@
 body {
-  background: url('./../public/assets/images/iananddina.jpg');
+  /* background: url('./../public/assets/images/iananddina.jpg'); */
   background-size: auto;
-  background-repeat: no-repeat;
+  
   background-size: 100% ;
-  background-position-y: top center;
-  background-color: rgba(24, 27, 170, 0.8);
+  background: #EEAECA;
+background: radial-gradient(circle, rgba(238, 174, 202, 1) 0%, rgba(148, 187, 233, 1) 100%);
   /* background-blend-mode: lighten; */
   background-blend-mode: lighten
 }

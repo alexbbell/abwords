@@ -1,19 +1,11 @@
 import dayjs from "dayjs";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 interface CountdownProps {
-  targetDate: string; 
-  onTimeOut: () => void;
-  isActive: boolean; 
+    targetDate: string; 
+    onTimeOut: () => void;
+    isActive: boolean; 
 }
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
 
 const Countdown: React.FC<CountdownProps> = ({ targetDate, onTimeOut, isActive }) => {
     const calculateTimeLeft = useCallback(() => {
@@ -29,41 +21,50 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate, onTimeOut, isActive }
     }, [targetDate]);
 
     const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+    const timeoutCalled = useRef(false);
 
     useEffect(() => {
-        if (!isActive || !targetDate) return;
+        // Reset timeout flag when targetDate changes
+        timeoutCalled.current = false;
+        
+        if (!isActive || !targetDate) {
+            return;
+        }
 
-        // Calculate immediately on mount/update
         const current = calculateTimeLeft();
         
-        // --- THE FIX ---
-        // If the date is already in the past when the component first sees it,
-        // it's likely a stale prop from the previous session. 
-        // We ignore it and wait for the new prop.
-        if (current && current.totalMs <= 0) {
-            return; 
+        if (!current || current.totalMs <= 0) {
+            if (!timeoutCalled.current) {
+                timeoutCalled.current = true;
+                onTimeOut();
+            }
+            return;
         }
 
         setTimeLeft(current);
 
         const timer = setInterval(() => {
             const next = calculateTimeLeft();
-            setTimeLeft(next);
 
-            if (next && next.totalMs <= 0) {
+            if (!next || next.totalMs <= 0) {
                 clearInterval(timer);
-                onTimeOut();
+                setTimeLeft({ minutes: 0, seconds: 0, totalMs: 0 });
+                if (!timeoutCalled.current) {
+                    timeoutCalled.current = true;
+                    onTimeOut();
+                }
+            } else {
+                setTimeLeft(next);
             }
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [isActive, targetDate, onTimeOut, calculateTimeLeft]);
+    }, [targetDate, isActive, calculateTimeLeft, onTimeOut]);
 
     if (!isActive || !targetDate) return null;
 
-    // Avoid flickering "0m 0s" while waiting for the interval to start
-    if (!timeLeft || (timeLeft.totalMs <= 0)) {
-        return <div className="timer-finished">Waiting for timer...</div>;
+    if (!timeLeft || timeLeft.totalMs <= 0) {
+        return <div className="timer-finished">Session Ended</div>;
     }
 
     return (
@@ -74,4 +75,4 @@ const Countdown: React.FC<CountdownProps> = ({ targetDate, onTimeOut, isActive }
     );
 };
 
-export default Countdown
+export default Countdown;

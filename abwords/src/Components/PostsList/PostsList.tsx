@@ -1,22 +1,18 @@
 // @flow
 import * as React from 'react';
 import { ApiBlogServices } from '../../Data/ApiBlogs';
-import { IBlog, IBlogReponse } from '../../Data/interfaces';
-import { Link, useNavigate } from 'react-router-dom';
+import { IBlogReponse } from '../../Data/interfaces';
+import { Link } from 'react-router-dom';
 import { Box, Button, Modal, Pagination } from '@mui/material';
 import { modalStyle } from '../../Data/constants';
 import { useAppDispatch, useAppSelector } from '../../Store/hooks'
 import { saveCurrentPage } from '../../Store/counterSlice';
-import { persistor, RootState } from '../../Store/store';
+import { RootState } from '../../Store/store';
 
 
-type Props = {
 
-};
-export const PostsList = (props: Props) => {
-    const navigate = useNavigate();
-
-
+export const PostsList = () => {
+    
     const [items, setItems] = React.useState<IBlogReponse>( {blogItems: [], total: 0 })
 
     const dispatch = useAppDispatch()

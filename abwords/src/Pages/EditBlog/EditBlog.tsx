@@ -3,9 +3,8 @@ import * as React from 'react';
 import { ApiBlogServices } from '../../Data/ApiBlogs';
 import { emptyBlog, IBaseItem, IBlog } from '../../Data/interfaces';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Button, Fade, Grid2, MenuItem, Modal, Pagination, Popper, Select, SelectChangeEvent, styled, TextField } from '@mui/material';
+import { Box, Button, Fade, Grid2, MenuItem, Modal, Popper, Select, SelectChangeEvent, styled, TextField } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { ApiServices } from '../../Data/ApiServices';
 import { modalStyle } from '../../Data/constants';
 import './EditBlog.css'
 
@@ -74,7 +73,7 @@ export const EditBlog = (props: Props) => {
         })
     }, [])
 
-    function changeCategory(event: SelectChangeEvent<string>, child: React.ReactNode): void {
+    function changeCategory(event: SelectChangeEvent<string>): void {
         const newItem = { ...item }
         newItem.categoryId = parseInt(event.target.value)
         newItem.categoryName = categories.filter(x => x.id === parseInt(event.target.value))[0].name
@@ -164,7 +163,7 @@ export const EditBlog = (props: Props) => {
                             <Button onClick={() => setOpenPopper(false)}>No</Button>
                             <Button onClick={ ()=> {
 console.log('anchorEl', anchorEl, fileToremove)
-apiBlogServices.RemoveFile(fileToremove, item.id).then( res => {
+apiBlogServices.RemoveFile(fileToremove, item.id).then( () => {
 
     const newFiles = [...uploadedFiles].filter(x => x !== fileToremove)
     setUploadedFiles(newFiles)
@@ -253,7 +252,7 @@ apiBlogServices.RemoveFile(fileToremove, item.id).then( res => {
                                         setOperationResult(operationResult + ',' + res.toString())
 
                                     setIsLockButton(false)
-                                }).catch(err => {
+                                }).catch( ()  => {
                                     setOperationResult('Post not saved')
                                     console.error('error on moving fotos')
                                     setIsLockButton(false)
