@@ -2,7 +2,7 @@ import { SiteVars } from "./constants"
 import { ICountDown } from "./interfaces"
 import axios from "axios"
 import { parseJwt } from "../Helpers/AuthFunc"
-import { IAnswer, IGameReport, IWord, IWordsResponse } from "../Components/WordMemory/data"
+import { IAnswer, IGameReport,  IWordsResponse } from "../Components/WordMemory/data"
 
 
 export interface IWordHistory {
@@ -147,7 +147,7 @@ export class ApiMemory {
     }
 
     DeleteWordHistory = async (token: string): Promise<string> => {
-        const url = 'https://localhost:7168/api/WordHistories/';
+        const url = `${SiteVars.mainApiUrl}WordHistories`;
         const config = {
             headers: {'Authorization': `Bearer ${token}`
             }

@@ -101,7 +101,7 @@ export const theme = createTheme({
         MuiDialogContentText: {
             styleOverrides: {
                 root: {
-                    color: '#FFF'
+                    color: '#999'
                 }
             }
 

@@ -21,7 +21,7 @@ function App() {
             <Route path="/" element={<StartPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/collection/:id" element={<EditBlog isNew={false} />} />
+            <Route path="/collection/edit/:id" element={<NewCollection isNew={false} />} />
             <Route path="/collection/new" element={<NewCollection isNew={true} />} />
             <Route path="/edit/:id" element={<EditBlog isNew={false} />} />
             <Route path="/edit/new" element={<EditBlog isNew={true} />} />

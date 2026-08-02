@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   Container,
@@ -12,18 +11,25 @@ import {
   Alert,
   Button,
   Divider,
-  Grid2,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Tooltip,
 } from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PersonIcon from '@mui/icons-material/Person';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { useWordStore } from '../../Store/useWordStore';
 import { useNavigate } from 'react-router-dom';
-import AddIcon from '@mui/icons-material/Add';
 import { SiteVars } from '../../Data/constants';
 import { ITokens } from '../../Data/interfaces';
 
-// TypeScript interface matching your API response
 export interface WordCollection {
   id: number;
   title: string;
@@ -32,30 +38,35 @@ export interface WordCollection {
   updDate: string;
 }
 
-
 export const MyWordCollections: React.FC = () => {
   const [collections, setCollections] = useState<WordCollection[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate()
+
+  // Delete Dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<boolean>(false);
+
+  const navigate = useNavigate();
   const { startLearning, viewCollection } = useWordStore();
+
   const isTokenStr: string = localStorage.getItem('tokens') ?? '{}';
   const tokens: ITokens = JSON.parse(isTokenStr);
-  
-  const API_URL = `${SiteVars.mainApiUrl}Word/wordcollections`;
+
+  const API_URL = `${SiteVars.mainApiUrl}Word/collections`;
 
   useEffect(() => {
-    console.log('tol', tokens)
     const fetchCollections = async () => {
       try {
         setLoading(true);
         setError(null);
         const response = await fetch(API_URL, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokens.accessToken}`
-        },
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${tokens.accessToken}`,
+          },
         });
 
         if (!response.ok) {
@@ -83,26 +94,69 @@ export const MyWordCollections: React.FC = () => {
     });
   };
 
+  // Open confirmation dialog
+  const handleOpenDeleteDialog = (id: number) => {
+    setSelectedCollectionId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  // Close confirmation dialog
+  const handleCloseDeleteDialog = () => {
+    if (!deleting) {
+      setDeleteDialogOpen(false);
+      setSelectedCollectionId(null);
+    }
+  };
+
+  // Perform API Delete Call
+  const handleConfirmDelete = async () => {
+    if (!selectedCollectionId) return;
+
+    try {
+      setDeleting(true);
+      const response = await fetch(`${API_URL}/${selectedCollectionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${tokens.accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: Failed to delete collection`);
+      }
+
+      // Remove item from state
+      setCollections((prev) => prev.filter((item) => item.id !== selectedCollectionId));
+      handleCloseDeleteDialog();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete collection.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-    
-    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-      <Box display="flex" alignItems="center" gap={1}>
-        <FolderIcon color="primary" fontSize="large" />
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          Word Collections
-        </Typography>
-      </Box>
+      {/* Header Bar */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <FolderIcon color="primary" fontSize="large" />
+          <Typography variant="h4" component="h1" fontWeight="bold">
+            Word Collections
+          </Typography>
+        </Box>
 
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={<AddIcon />}
-        onClick={() => navigate('/collection/new')}
-      >
-        Add New Collection
-      </Button>
-    </Box>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={() => navigate('/collection/new')}
+        >
+          Add New Collection
+        </Button>
+      </Box>
 
       {/* Loading State */}
       {loading && (
@@ -125,14 +179,37 @@ export const MyWordCollections: React.FC = () => {
 
       {/* List / Grid Display */}
       {!loading && !error && collections.length > 0 && (
-        <Grid2 container spacing={3}>
+        <Grid container spacing={3}>
           {collections.map((item) => (
             <Grid item xs={12} sm={6} key={item.id}>
               <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" component="h2" gutterBottom fontWeight="medium">
-                    {item.title}
-                  </Typography>
+                  {/* Title and Action Buttons */}
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Typography variant="h6" component="h2" fontWeight="medium">
+                      {item.title}
+                    </Typography>
+                    <Box display="flex" gap={0.5}>
+                      <Tooltip title="Edit Collection">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => navigate(`/collection/edit/${item.id}`)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete Collection">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleOpenDeleteDialog(item.id)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
 
                   <Box display="flex" alignItems="center" gap={0.5} mb={1}>
                     <PersonIcon fontSize="small" color="action" />
@@ -151,29 +228,52 @@ export const MyWordCollections: React.FC = () => {
                   </Box>
                 </CardContent>
 
-                <CardActions sx={{ px: 2, pb: 2,}}>
-                   <Button size="small" sx={{ whiteSpace: 'nowrap', width: '50%' }}
-                    variant="contained" disableElevation 
-                    onClick={() => viewCollection(item)}>
-                    View All Words 
-                    </Button>
+                <CardActions sx={{ px: 2, pb: 2, gap: 1 }}>
+                  <Button
+                    size="small"
+                    sx={{ whiteSpace: 'nowrap', width: '50%' }}
+                    variant="outlined"
+                    onClick={() => viewCollection(item)}
+                  >
+                    View All Words
+                  </Button>
 
-                  <Button size="small" sx={{width: '50%'}}
+                  <Button
+                    size="small"
+                    sx={{ width: '50%' }}
                     onClick={() => {
                       startLearning(item);
-                      navigate('/memory')
+                      navigate('/memory');
                     }}
-                    variant="contained" 
+                    variant="contained"
                     disableElevation
-                    fullWidth>
+                  >
                     Start Learning
                   </Button>
                 </CardActions>
               </Card>
             </Grid>
           ))}
-        </Grid2>
+        </Grid>
       )}
+
+      {/* Confirmation Dialog for Delete */}
+      <Dialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog}>
+        <DialogTitle>Delete Word Collection</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this collection? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained" disabled={deleting}>
+            {deleting ? <CircularProgress size={20} color="inherit" /> : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
