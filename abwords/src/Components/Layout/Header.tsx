@@ -1,5 +1,5 @@
 // @flow
-import { Avatar, Box, Button, IconButton, Link, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Avatar, Box, Button, IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
 import AppBar from '@mui/material/AppBar/AppBar';
 import Container from '@mui/material/Container/Container';
 import Toolbar from '@mui/material/Toolbar/Toolbar';
@@ -7,77 +7,103 @@ import Typography from '@mui/material/Typography/Typography';
 import * as React from 'react';
 import AdbIcon from '@mui/icons-material/Adb';
 import MenuIcon from '@mui/icons-material/Menu';
-import { LogOut } from '../../Middleware/AuthActions';
 import { useNavigate } from 'react-router-dom';
+import { useWordStore } from '../../Store/useWordStore';
 
 type Links = {
-  Title: string,
-  Url: string
-}
+  Key: string;
+  Title: string;
+  Url: string;
+  Role: 'anonym' | 'logged' | 'all';
+  Action?: () => void;
+};
 
 export const Header = () => {
-    const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
-    const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
-    const navigate = useNavigate();
-    const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorElNav(event.currentTarget);
-    };
-    const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorElUser(event.currentTarget);
-    };
+  const isAuthenticated = useWordStore((state) => state.isAuthenticated);
+  const logout = useWordStore((state) => state.logout);
+  const user = useWordStore((state) => state.user);
 
-    const handleCloseNavMenu = () => {
-        setAnchorElNav(null);
-    };
+  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
+  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
 
-    // const [open, setOpen] = React.useState(false);
-    // const handleOpen = () => setOpen(true);
-    // const handleClose = () => setOpen(false);
+  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElNav(event.currentTarget);
+  };
+  
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
 
-    const items: Links[] = [
-       { Title: 'Home', Url: '/' },
-       { Title: 'Dashboard', Url: '/dashboard' },
-       { Title: 'Word Memory', Url: '/memory' },
-       
-       { Title: 'Login', Url: '/login' },
-       { Title: 'About', Url: '/about' }
-    ]
-    const settings = ['Profile', 'Account', 'Dashboard', 'Logout'] as const;
-    type SettingsType = typeof settings[number];
-    const handleCloseUserMenu = (setting:SettingsType) => {
-        console.log('setting', setting)
-        switch(setting) {
-            case 'Profile':
-                break;
-            case 'Account':
+  const handleCloseNavMenu = () => {
+    setAnchorElNav(null);
+  };
 
-                break;
-            case 'Dashboard':
-                break;
-            case 'Logout':
-                console.log('Logout')
-                setTimeout( () => {
-                  LogOut()
-                  navigate('/')
+  const handleLogout = () => {
+    logout(); // Updates Zustand state and clears persistent storage automatically
+    navigate('/');
+  };
 
-                }, 1000)
+  const items: Links[] = [
+    { Key: 'khome', Title: 'Home', Url: '/', Role: 'all' },
+    { Key: 'kdashboard', Title: 'Dashboard', Url: '/dashboard', Role: 'logged' },
+    { Key: 'klogin', Title: 'Login', Url: '/login', Role: 'anonym' },
+    { Key: 'kabout', Title: 'About', Url: '/about', Role: 'all' },
+    {
+      Key: 'klogout',
+      Title: 'Logout',
+      Url: '/',
+      Role: 'logged',
+      Action: handleLogout,
+    },
+  ];
 
-                break;
-        }
-        setAnchorElUser(null);
-    };
+  const showItems = isAuthenticated
+    ? items.filter((i) => i.Role === 'all' || i.Role === 'logged')
+    : items.filter((i) => i.Role === 'all' || i.Role === 'anonym');
 
+  const settings = ['Profile', 'Account', 'Dashboard', 'Logout'] as const;
+  type SettingsType = (typeof settings)[number];
 
-    return (
-        <>
-        <AppBar position="static">
-            <Container maxWidth="xl">
-            <Toolbar disableGutters>
-            <Typography
+  const handleCloseUserMenu = (setting?: SettingsType) => {
+    if (setting) {
+      switch (setting) {
+        case 'Profile':
+          navigate('/profile');
+          break;
+        case 'Account':
+          navigate('/account');
+          break;
+        case 'Dashboard':
+          navigate('/dashboard');
+          break;
+        case 'Logout':
+          handleLogout();
+          break;
+      }
+    }
+    setAnchorElUser(null);
+  };
+
+  const handleNavClick = (page: Links) => {
+    handleCloseNavMenu();
+    if (page.Action) {
+      page.Action();
+    } else {
+      navigate(page.Url);
+    }
+  };
+
+  return (
+    <AppBar position="static">
+      <Container maxWidth="xl">
+        <Toolbar disableGutters>
+          {/* Desktop Logo */}
+          <Typography
             variant="h6"
             noWrap
-            component="a"
-            href="#app-bar-with-responsive-menu"
+            component="div"
+            onClick={() => navigate('/')}
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -86,13 +112,13 @@ export const Header = () => {
               letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
+              cursor: 'pointer',
             }}
           >
             LOGO
           </Typography>
 
-
-
+          {/* Mobile Navigation Menu */}
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton
               size="large"
@@ -122,19 +148,21 @@ export const Header = () => {
                 display: { xs: 'block', md: 'none' },
               }}
             >
-              {items.map((page) => (
-                <MenuItem key={page.Url} onClick={handleCloseNavMenu}>
-                  <Link href={page.Url}><Typography textAlign="center">{page.Title}</Typography></Link>
+              {showItems.map((page) => (
+                <MenuItem key={page.Key} onClick={() => handleNavClick(page)}>
+                  <Typography textAlign="center">{page.Title}</Typography>
                 </MenuItem>
               ))}
             </Menu>
           </Box>
+
+          {/* Mobile Logo */}
           <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
           <Typography
             variant="h5"
             noWrap
-            component="a"
-            href="#app-bar-with-responsive-menu"
+            component="div"
+            onClick={() => navigate('/')}
             sx={{
               mr: 2,
               display: { xs: 'flex', md: 'none' },
@@ -144,19 +172,18 @@ export const Header = () => {
               letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
+              cursor: 'pointer',
             }}
           >
             LOGO
           </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {items.map((page) => (
-              <Button
-                key={page.Url}
 
-                onClick={ () => {
-                  navigate(page.Url)
-                  handleCloseNavMenu()
-                }}
+          {/* Desktop Navigation Links */}
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
+            {showItems.map((page) => (
+              <Button
+                key={`nav-${page.Key}`}
+                onClick={() => handleNavClick(page)}
                 sx={{ my: 2, color: 'white', display: 'block' }}
               >
                 {page.Title}
@@ -164,44 +191,40 @@ export const Header = () => {
             ))}
           </Box>
 
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={() => handleCloseUserMenu(setting)}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-
-            </Menu>
-          </Box>
-
-
-            </Toolbar>
-            </Container>
-
-
-        </AppBar>
-
-</>
-    );
+          {/* User Settings Avatar Menu (Shown when authenticated) */}
+          {isAuthenticated && (
+            <Box sx={{ flexGrow: 0 }}>
+              <Tooltip title="Open settings">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <Avatar alt={user?.name || 'User Avatar'} src="/static/images/avatar/2.jpg" />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                sx={{ mt: '45px' }}
+                id="user-menu-appbar"
+                anchorEl={anchorElUser}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorElUser)}
+                onClose={() => handleCloseUserMenu()}
+              >
+                {settings.map((setting) => (
+                  <MenuItem key={setting} onClick={() => handleCloseUserMenu(setting)}>
+                    <Typography textAlign="center">{setting}</Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
+          )}
+        </Toolbar>
+      </Container>
+    </AppBar>
+  );
 };

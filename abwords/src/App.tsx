@@ -10,6 +10,7 @@ import { SignupPage } from './Pages/SignupPage/SignupPage';
 import { theme } from './theme';
 import LoginPage from './Pages/Login/Login';
 import NewCollection from './Pages/NewCollection/NewCollection';
+import About from './Pages/About/About';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/edit/new" element={<EditBlog isNew={true} />} />
             <Route path="/memory/" element={<WordMemPage />} />
             <Route path="/memory/:id" element={<WordMemPage />} />
+            <Route path="/about/" element={<About />} />
             <Route path="/signup/" element={<SignupPage />} />
           </Route>
         </Routes>

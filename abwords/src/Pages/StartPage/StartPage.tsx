@@ -3,35 +3,25 @@ import * as React from 'react';
 import { ITokens } from '../../Data/interfaces';
 import { Dashboard } from '../Dashboard/Dashboard';
 import StartPageNonAuth from './StartPageNonAuth';
-import { Container } from '@mui/material';
+import { Box, Container } from '@mui/material';
+import { mainBoxStyles } from '../../theme';
+import { useWordStore } from '../../Store/useWordStore';
 //import { jwtDecode } from 'jwt-decode' // import dependency
 //import * as dayjs from 'dayjs'
 
 export const StartPage = () => {
     //const dayjs = require('dayjs')
-    const [accessToken, setAccessToken] = React.useState('')
-
-    React.useEffect( () => {
-        const isTokenStr:string = localStorage.getItem('tokens')?? '{}'
-        const tokens: ITokens = JSON.parse(isTokenStr)
-        console.log('isTokenStr', tokens)
-        try {
-            if(tokens.accessToken) {
-                setAccessToken (tokens.accessToken)
-            }
-        } catch (err) {
-            console.error(err)
-        }
+      const isAuthenticated = useWordStore((state) => state.isAuthenticated);
 
 
-    }, [accessToken])
 
 
     return (
+
    <>
-   <Container maxWidth="lg">
+    
     {
-        !accessToken || accessToken === '' ? 
+        !isAuthenticated ? 
         <>
             <StartPageNonAuth />
         </>
@@ -43,7 +33,7 @@ export const StartPage = () => {
         </>
     }
     
-    </Container>
-   </>
+    </>
+
     );
 };

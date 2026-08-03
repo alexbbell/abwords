@@ -1,13 +1,17 @@
 // Dashboard.tsx
+import Container from '@mui/material/Container';
 import MyWordCollections from '../../Components/MyWordCollections/MyWordCollections';
 import { useWordStore } from '../../Store/useWordStore';
+import { Box } from '@mui/material';
+import { mainBoxStyles } from '../../theme';
 
 export const Dashboard = () => {
     const mode = useWordStore((state) => state.mode);
     const selectedCollection = useWordStore((state) => state.selectedCollection);
     return (
-        <div>
-            <h1>Dashboard</h1>
+      <Container maxWidth="lg">
+             <h1>Dashboard</h1>
+    <Box component="main" sx={mainBoxStyles}>
             {/* <PostsList /> */}
 
             <MyWordCollections />
@@ -20,6 +24,6 @@ export const Dashboard = () => {
         </div>
       )}
             {/* <WordMemory collectionId={selectedCollection?.id??1}  /> */}
-        </div>
+        </Box></Container>
     );
 };

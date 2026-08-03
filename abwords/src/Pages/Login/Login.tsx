@@ -1,50 +1,27 @@
 // @flow
 import * as React from 'react';
-import { ITokens } from '../../Data/interfaces';
-
-import { Dashboard } from '../Dashboard/Dashboard';
 import { Box, Container } from '@mui/material';
+import { Navigate } from 'react-router-dom';
+
 import { LoginForm } from '../../Components/LoginForm/LoginForm';
 import { mainBoxStyles } from '../../theme';
-//import { jwtDecode } from 'jwt-decode' // import dependency
-//import * as dayjs from 'dayjs'
+import { useWordStore } from '../../Store/useWordStore';
 
 export const LoginPage = () => {
-    //const dayjs = require('dayjs')
-    const [accessToken, setAccessToken] = React.useState('')
+  const isAuthenticated = useWordStore((state) => state.isAuthenticated);
 
-    React.useEffect(() => {
-        const isTokenStr: string = localStorage.getItem('tokens') ?? '{}'
-        const tokens: ITokens = JSON.parse(isTokenStr)
-        console.log('isTokenStr', tokens)
-        try {
-            if (tokens.accessToken) {
-                setAccessToken(tokens.accessToken)
-            }
-        } catch (err) {
-            console.error(err)
-        }
+  // If the user is already authenticated, redirect them directly to the dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-
-    }, [accessToken])
-
-
-    return (
-
-        <Box sx={mainBoxStyles}>
-            <Container maxWidth="lg">
-                {
-                    !accessToken || accessToken === '' ?
-                        <LoginForm />
-                        :
-                        <>
-                            <Dashboard />
-
-                        </>
-                }
-
-            </Container>
-        </Box>
-    );
+  return (
+    <Box sx={mainBoxStyles}>
+      <Container maxWidth="lg">
+        <LoginForm />
+      </Container>
+    </Box>
+  );
 };
+
 export default LoginPage;

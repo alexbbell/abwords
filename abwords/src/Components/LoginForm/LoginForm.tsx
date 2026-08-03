@@ -8,15 +8,18 @@ import Link from '@mui/material/Link';
 import Card from '@mui/material/Card';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 import { useNavigate } from 'react-router';
 
 import { emptyAuthParams, IAccount, ITokens } from '../../Data/interfaces';
 import { ApiServices } from '../../Data/ApiServices';
+import { useWordStore } from '../../Store/useWordStore';
 
 const apiServices = new ApiServices();
 
 export const LoginForm = () => {
   const navigate = useNavigate();
+  const setAuth = useWordStore((state) => state.setAuth);
 
   const [authRequest, setAuthRequest] = React.useState<IAccount>(emptyAuthParams);
   const [emailError, setEmailError] = React.useState(false);
@@ -24,15 +27,13 @@ export const LoginForm = () => {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   
+  const [apiError, setApiError] = React.useState<string | null>(null);
   const [, setOpenForgot] = React.useState(false);
   const [, setOpenRegister] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
   const handleClickForgotOpen = () => setOpenForgot(true);
-  // const handleForgotClose = () => setOpenForgot(false);
-  
   const handleClickRegisterOpen = () => setOpenRegister(true);
-  // const handleRegisterClose = () => setOpenRegister(false);
 
   const validateInputs = (): boolean => {
     let isValid = true;
@@ -60,6 +61,7 @@ export const LoginForm = () => {
 
   const handleInputChange = (field: 'login' | 'password', value: string) => {
     setAuthRequest((prev) => ({ ...prev, [field]: value }));
+    if (apiError) setApiError(null);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -70,16 +72,25 @@ export const LoginForm = () => {
     }
 
     setLoading(true);
+    setApiError(null);
+
     try {
       const res = await apiServices.AuthLogin(authRequest);
+
       const tokens: ITokens = {
         accessToken: res.tokens?.accessToken ?? '',
         refreshToken: res.tokens?.refreshToken ?? '',
       };
-      localStorage.setItem('tokens', JSON.stringify(tokens));
+
+      const user = res.user ?? { id: '', email: authRequest.login };
+
+      // Update Zustand state (and persistent storage) directly
+      setAuth(user, tokens);
+
       navigate('/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login Error:', err);
+      setApiError(err?.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -124,6 +135,12 @@ export const LoginForm = () => {
       <Typography variant="h6" component="h1" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
         Log In
       </Typography>
+
+      {apiError && (
+        <Alert severity="error" sx={{ bgcolor: '#2c0b0e', color: '#f8d7da' }}>
+          {apiError}
+        </Alert>
+      )}
 
       <Box
         component="form"
@@ -209,9 +226,6 @@ export const LoginForm = () => {
           </Link>
         </Typography>
       </Box>
-
-      {/* <ForgotPassword open={openForgot} handleClose={handleForgotClose} />
-      <SignUp open={openRegister} handleClose={handleRegisterClose} /> */}
     </Card>
   );
 };
