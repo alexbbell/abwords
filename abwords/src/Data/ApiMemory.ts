@@ -2,7 +2,7 @@ import { SiteVars } from "./constants"
 import { ICountDown } from "./interfaces"
 import axios from "axios"
 import { parseJwt } from "../Helpers/AuthFunc"
-import { IAnswer, IGameReport,  IWord,  IWordsResponse } from "../Components/WordMemory/data"
+import { IAnswer, IGameReport,  IWordsResponse } from "../Components/WordMemory/data"
 
 
 export interface IWordHistory {
@@ -20,7 +20,7 @@ export class ApiMemory {
 
 
     SetTimer = async (token: string, option: 'start' | 'stop' ):Promise<ICountDown> => {
-        const t = parseJwt(token)
+        // const t = parseJwt(token)
         return new Promise<ICountDown>( (resolve, reject) => {
             const requestOptions = {
                 method: 'POST',
@@ -139,7 +139,7 @@ GetWordsFromCollection = async (colId: number, token: string): Promise<IWordsRes
             }
         }
 
-        return new Promise<IGameReport>( (resolve, reject) => {
+        return new Promise<IGameReport>( (resolve) => {
             axios.get(url, config ).then(res => {
                 console.log(`result ${res.data}`)
                 const re: IGameReport = {
@@ -161,7 +161,7 @@ GetWordsFromCollection = async (colId: number, token: string): Promise<IWordsRes
             headers: {'Authorization': `Bearer ${token}`
             }
         }
-        return new Promise<string>( (resolve, reject) => {
+        return new Promise<string>( (resolve) => {
             axios.delete(url, config ).then(res => {
                 console.log(`result ${res.data}`)
                 const result: string = res.data

@@ -5,9 +5,6 @@ import { IBlogReponse } from '../../Data/interfaces';
 import { Link } from 'react-router-dom';
 import { Box, Button, Modal, Pagination } from '@mui/material';
 import { modalStyle } from '../../Data/constants';
-import { useAppDispatch, useAppSelector } from '../../Store/hooks'
-import { saveCurrentPage } from '../../Store/counterSlice';
-import { RootState } from '../../Store/store';
 
 
 
@@ -15,9 +12,7 @@ export const PostsList = () => {
     
     const [items, setItems] = React.useState<IBlogReponse>( {blogItems: [], total: 0 })
 
-    const dispatch = useAppDispatch()
-
-    const page = useAppSelector( (state: RootState) => state.counter.currentPage)
+    const page = 1
     //const [page, setPage] = React.useState(1)
     const [removedItemsCounter, setRemovedItemsCounter] = React.useState(0)
     const apiBlogServices = new ApiBlogServices()
@@ -48,9 +43,8 @@ export const PostsList = () => {
     }, [page, removedItemsCounter])
 
     const handleChange = (event: React.ChangeEvent<unknown>, value: number) => {
-        console.log(value);
-        //s1tPage(value)
-        dispatch( saveCurrentPage(value))
+        console.log(event, value);
+        
       };
 
     return (

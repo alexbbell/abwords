@@ -1,6 +1,4 @@
 // Dashboard.tsx
-import React, {  } from 'react';
-import { WordMemory } from '../../Components/WordMemory/WordMemory';
 import MyWordCollections from '../../Components/MyWordCollections/MyWordCollections';
 import { useWordStore } from '../../Store/useWordStore';
 

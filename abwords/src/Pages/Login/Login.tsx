@@ -4,7 +4,6 @@ import { ITokens } from '../../Data/interfaces';
 
 import { Dashboard } from '../Dashboard/Dashboard';
 import { Box, Container } from '@mui/material';
-import StartPageNonAuth from '../StartPage/StartPageNonAuth';
 import { LoginForm } from '../../Components/LoginForm/LoginForm';
 import { mainBoxStyles } from '../../theme';
 //import { jwtDecode } from 'jwt-decode' // import dependency

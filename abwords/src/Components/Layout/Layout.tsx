@@ -1,6 +1,5 @@
 // @flow
 import { Box, Grid2 } from '@mui/material';
-import * as React from 'react';
 import { Outlet } from 'react-router';
 import { Header } from './Header';
 import { Footer } from './Footer';

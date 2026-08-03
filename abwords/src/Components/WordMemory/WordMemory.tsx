@@ -224,7 +224,7 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
         const isCorrect = word.id === cWord.id;
 
         // Set feedback only for the clicked button
-        const newFeedback = [null, null, null, null];
+        const newFeedback: FeedbackColor[]= [null, null, null, null];
         newFeedback[index] = isCorrect ? 'green' : 'red';
         setButtonFeedback(newFeedback);
 

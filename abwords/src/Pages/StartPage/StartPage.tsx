@@ -1,7 +1,6 @@
 // @flow
 import * as React from 'react';
 import { ITokens } from '../../Data/interfaces';
-import { LoginForm } from '../../Components/LoginForm/LoginForm';
 import { Dashboard } from '../Dashboard/Dashboard';
 import StartPageNonAuth from './StartPageNonAuth';
 import { Container } from '@mui/material';

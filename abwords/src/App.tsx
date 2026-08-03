@@ -1,4 +1,3 @@
-import React from 'react';
 import './App.css';
 import { StartPage } from './Pages/StartPage/StartPage';
 import { Route, Routes } from 'react-router-dom';

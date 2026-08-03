@@ -32,7 +32,7 @@ export interface CollectionResponseDto {
   Title?: string;
   title?: string;
   WordsCollection?: WordItem[];
-  words?: WordItem[];
+  collection?: WordItem[];
 }
 
 const API_URL = SiteVars.mainApiUrl;
@@ -85,7 +85,7 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
 
         setTitle(collection.Title || collection.title || '');
         
-        const rawWords = collection.WordsCollection || collection.words || [];
+        const rawWords = collection.WordsCollection || collection.collection || [];
         
         if (rawWords.length > 0) {
           setWords(
@@ -150,7 +150,7 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
 
     const payload = {
       title: title.trim(),
-      words: validWords,
+      Words:validWords
     };
 
     const targetUrl = isNew

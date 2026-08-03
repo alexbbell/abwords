@@ -9,7 +9,7 @@ export class ApiBlogServices {
 
     getBlogItems = async (page?:number, perPage?: number):Promise<IBlogReponse> => {
         return new Promise<IBlogReponse>( (resolve, reject) => {
-            const url = `${this._blogUrl}?page=${page}`
+            const url = `${this._blogUrl}?page=${page}&perPage=${perPage}`
             fetch(url)
                 .then(res => res.json())
                 .then(result => {
@@ -39,7 +39,7 @@ export class ApiBlogServices {
         return new Promise<IOperationResult>( (resolve, reject) => {
             console.log('??0', id)
             axios.delete(`${this._blogUrl}/11${id}`)
-            .then( res => {
+            .then( () => {
                 const result: IOperationResult  = {
                     isSuccess: true,
                     message: 'The item is removed'
@@ -67,7 +67,7 @@ export class ApiBlogServices {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const resData = await response.json();
-        return new Promise<IBaseItem[]>( (resolve, reject) => {
+        return new Promise<IBaseItem[]>( (resolve) => {
             resolve(resData)
         })
     }
@@ -75,6 +75,7 @@ export class ApiBlogServices {
 
     SavePost = async (blog: IBlog): Promise<string> => {
         const formData = JSON.stringify(blog)
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise<string> ( async (resolve, reject) => {
             try {
                 let response = null

@@ -12,8 +12,6 @@ import { useNavigate } from 'react-router';
 
 import { emptyAuthParams, IAccount, ITokens } from '../../Data/interfaces';
 import { ApiServices } from '../../Data/ApiServices';
-import ForgotPassword from './ForgotPassword';
-import SignUp from './SignUp';
 
 const apiServices = new ApiServices();
 
@@ -26,15 +24,15 @@ export const LoginForm = () => {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   
-  const [openForgot, setOpenForgot] = React.useState(false);
-  const [openRegister, setOpenRegister] = React.useState(false);
+  const [, setOpenForgot] = React.useState(false);
+  const [, setOpenRegister] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
   const handleClickForgotOpen = () => setOpenForgot(true);
-  const handleForgotClose = () => setOpenForgot(false);
-
+  // const handleForgotClose = () => setOpenForgot(false);
+  
   const handleClickRegisterOpen = () => setOpenRegister(true);
-  const handleRegisterClose = () => setOpenRegister(false);
+  // const handleRegisterClose = () => setOpenRegister(false);
 
   const validateInputs = (): boolean => {
     let isValid = true;
