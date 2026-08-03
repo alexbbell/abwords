@@ -25,6 +25,7 @@ export interface WordItem {
   translate1: string;
   translate2: string;
   translate3?: string;
+  tempId?: string; // Used for React keys without polluting backend 'id'
 }
 
 export interface CollectionResponseDto {
@@ -50,7 +51,13 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
 
   const [title, setTitle] = useState<string>('');
   const [words, setWords] = useState<WordItem[]>([
-    { id: crypto.randomUUID(), translate1: '', translate2: '', translate3: '' },
+    {
+      id: crypto.randomUUID(),
+      tempId: crypto.randomUUID(),
+      translate1: '',
+      translate2: '',
+      translate3: '',
+    },
   ]);
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -75,8 +82,6 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
         }
 
         const data: CollectionResponseDto[] | CollectionResponseDto = await response.json();
-        
-        // Handle array response structure [ { WordsCollection: [...], Title: "..." } ]
         const collection = Array.isArray(data) ? data[0] : data;
 
         if (!collection) {
@@ -84,14 +89,15 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
         }
 
         setTitle(collection.Title || collection.title || '');
-        
+
         const rawWords = collection.WordsCollection || collection.collection || [];
-        
+
         if (rawWords.length > 0) {
           setWords(
             rawWords.map((w) => ({
               ...w,
-              id: w.id ?? crypto.randomUUID(),
+              id: w.id || crypto.randomUUID(), // Guarantee GUID exists
+              tempId: crypto.randomUUID(), // Local React list key
             }))
           );
         }
@@ -119,17 +125,23 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
   const handleAddWord = () => {
     setWords([
       ...words,
-      { id: crypto.randomUUID(), translate1: '', translate2: '', translate3: '' },
+      {
+        id: crypto.randomUUID(),
+        tempId: crypto.randomUUID(),
+        translate1: '',
+        translate2: '',
+        translate3: '',
+      },
     ]);
   };
 
   const handleRemoveWord = (index: number) => {
-    if (words.length === 1) return; // Keep at least one row
+    if (words.length === 1) return;
     const updatedWords = words.filter((_, i) => i !== index);
     setWords(updatedWords);
   };
 
-  // Form Submission (Create or Edit)
+  // Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -139,9 +151,15 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
       return;
     }
 
-    const validWords = words.filter(
-      (w) => w.translate1.trim() !== '' && w.translate2.trim() !== ''
-    );
+    // Sanitize payload before sending to backend
+    const validWords = words
+      .filter((w) => w.translate1.trim() !== '' && w.translate2.trim() !== '')
+      .map((w) => ({
+        id: w.id || crypto.randomUUID(), // Always ensure an ID is sent
+        translate1: w.translate1.trim(),
+        translate2: w.translate2.trim(),
+        translate3: w.translate3?.trim() || '',
+      }));
 
     if (validWords.length === 0) {
       setError('Please add at least one complete word and translation pair.');
@@ -150,7 +168,7 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
 
     const payload = {
       title: title.trim(),
-      Words:validWords
+      Words: validWords,
     };
 
     const targetUrl = isNew
@@ -194,7 +212,6 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      {/* Top Header & Back Button */}
       <Box display="flex" alignItems="center" mb={3} gap={1}>
         <IconButton onClick={() => navigate(-1)} color="inherit">
           <ArrowBackIcon />
@@ -212,7 +229,6 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
 
       <Paper elevation={0} variant="outlined" sx={{ p: 3 }}>
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          {/* Collection Title */}
           <TextField
             label="Collection Title"
             fullWidth
@@ -227,11 +243,10 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
             Words & Translations
           </Typography>
 
-          {/* Dynamic Word Pairs Form */}
           <Stack spacing={2} mb={3}>
             {words.map((item, index) => (
               <Box
-                key={item.id || index}
+                key={item.tempId || item.id || index}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -284,7 +299,6 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
 
           <Divider sx={{ mb: 3 }} />
 
-          {/* Submit Button */}
           <Box display="flex" justifyContent="flex-end" gap={2}>
             <Button
               variant="outlined"
