@@ -10,13 +10,13 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ClearIcon from '@mui/icons-material/Clear';
 import { ApiMemory } from '../../Data/ApiMemory';
 import dayjs from 'dayjs';
-import { ITokens } from '../../Data/interfaces';
 
 
 import WordReport from '../WordReport/WordReport';
 import { useAnswerStore } from '../../Store/answerSlice';
 
 import { useParams } from 'react-router';
+import { useWordStore } from '../../Store/useWordStore';
 
 // Define the specific matte color palette
 const palette = {
@@ -54,6 +54,8 @@ type FeedbackColor = 'green' | 'red' | null;
 
 export const WordMemory:React.FC = () => {
     
+    
+    const tokens = useWordStore((state) => state.tokens);
 
     const { id } = useParams<{ id: string }>();
     const collectionId = parseInt(id??'0')
@@ -81,8 +83,7 @@ export const WordMemory:React.FC = () => {
 
     
 
-    const isTokenStr: string = localStorage.getItem('tokens') ?? '{}';
-    const tokens: ITokens = JSON.parse(isTokenStr);
+    
     const delay: number = 1000;
 
     const dialogClose = React.useCallback(() => {
@@ -93,12 +94,12 @@ export const WordMemory:React.FC = () => {
         setTimerOut(true);
         setIsDisabled(true);
         setCntDown(null);
-        api.SetTimer(tokens.accessToken, 'stop').catch(() => {});
+        api.SetTimer(tokens.accessToken??'', 'stop').catch(() => {});
     };
 
     const GetTimer = async (): Promise<string> => {
         try {
-            const timerEnd = await api.GetTimerEnd(tokens.accessToken);
+            const timerEnd = await api.GetTimerEnd(tokens.accessToken??'');
             if (timerEnd?.endTime && timerEnd.endTime !== '') {
                 const endTime = timerEnd.endTime;
                 const now = dayjs();
@@ -113,7 +114,7 @@ export const WordMemory:React.FC = () => {
                     setTimerOut(true);
                     setIsDisabled(true);
                     setCntDown(null);
-                    await api.SetTimer(tokens.accessToken, 'stop').catch(() => {});
+                    await api.SetTimer(tokens.accessToken??'', 'stop').catch(() => {});
                     return 'timeout';
                 }
             } else {
@@ -133,7 +134,7 @@ export const WordMemory:React.FC = () => {
 
     const InitialWordLoad = async () => {
         try {
-            const res = await api.GetWordsFromCollection(collectionId, tokens.accessToken);
+            const res = await api.GetWordsFromCollection(collectionId, tokens.accessToken??'');
             console.log('res', res)
             setItems(res.words);
             return res.words;
@@ -156,7 +157,7 @@ React.useEffect(() => {
     const initData = async () => {
         try {
             const targetColId = collectionId;
-            const res = await api.GetWordsFromCollection(targetColId, tokens.accessToken);
+            const res = await api.GetWordsFromCollection(targetColId, tokens.accessToken??'');
             
             if (!isMounted) return;
 
@@ -233,7 +234,7 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
 
         setTimeout(() => {
             addItem(newAnswer);
-            api.SaveHistory(tokens.accessToken, newAnswer);
+            api.SaveHistory(tokens.accessToken??'', newAnswer);
             SetWordCombination(items);
             // Reset feedback for next word
             setButtonFeedback([null, null, null, null]);
@@ -243,8 +244,8 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
 
     const handleStart = async () => {
         try {
-            await api.DeleteWordHistory(tokens.accessToken);
-            const timerData = await api.SetTimer(tokens.accessToken, 'start');
+            await api.DeleteWordHistory(tokens.accessToken??'');
+            const timerData = await api.SetTimer(tokens.accessToken??'', 'start');
             const newTime = timerData?.endTime || dayjs().add(5, 'minute').toISOString();
             const loadedWords = items.length > 0 ? items : await InitialWordLoad();
             cleanItems();
@@ -297,7 +298,7 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
                                         variant='contained' 
                                         size="large"
                                         onClick={async () => {
-                                            await api.SetTimer(tokens.accessToken, 'stop');
+                                            await api.SetTimer(tokens.accessToken??'', 'stop');
                                             setTimerOut(true);
                                             setShowDialog(true);
                                             

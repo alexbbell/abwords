@@ -11,6 +11,7 @@ import { theme } from './theme';
 import LoginPage from './Pages/Login/Login';
 import NewCollection from './Pages/NewCollection/NewCollection';
 import About from './Pages/About/About';
+import { Profile } from './Pages/Profile/Profile';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/memory/" element={<WordMemPage />} />
             <Route path="/memory/:id" element={<WordMemPage />} />
             <Route path="/about/" element={<About />} />
+            <Route path="/profile/" element={<Profile />} />
             <Route path="/signup/" element={<SignupPage />} />
           </Route>
         </Routes>

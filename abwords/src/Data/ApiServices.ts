@@ -30,6 +30,10 @@ console.log('response', response)
                 tokens: {
                     accessToken: resData.accessToken || '',
                     refreshToken: resData.refreshToken || ''
+                },
+                user: {
+                    id: resData.user.id,
+                    userName: resData.user.userName,
                 }
             };
             return result;
@@ -39,6 +43,9 @@ console.log('response', response)
             const badResult: IAuthResponse = {
                 loginSuccess: false,
                 loginResultMessage: `Failed to log in: ${error}`,
+                user: {
+                    id: '', userName: ''
+                },
                 tokens: {
                     accessToken: '',
                     refreshToken: ''

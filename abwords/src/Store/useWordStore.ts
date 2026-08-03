@@ -6,7 +6,7 @@ import { WordCollection } from '../Components/MyWordCollections/MyWordCollection
 
 export interface User {
   id: string;
-  email: string;
+  userName: string;
   name?: string;
   role?: string;
 }

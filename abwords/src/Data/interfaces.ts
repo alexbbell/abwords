@@ -11,7 +11,13 @@ export interface ITokens {
     accessToken: string,
     refreshToken: string,
 }
+
+export interface IUser {
+    userName: string, 
+    id: string,
+}
 export interface IAuthResponse {
+    user: IUser, 
     loginSuccess: boolean,
     loginResultMessage: string,
     tokens?: ITokens,

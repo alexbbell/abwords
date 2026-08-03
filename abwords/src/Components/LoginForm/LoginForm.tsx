@@ -82,7 +82,7 @@ export const LoginForm = () => {
         refreshToken: res.tokens?.refreshToken ?? '',
       };
 
-      const user = res.user ?? { id: '', email: authRequest.login };
+      const user = res.user ?? { id: '', userName: authRequest.login };
 
       // Update Zustand state (and persistent storage) directly
       setAuth(user, tokens);

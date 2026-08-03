@@ -1,3 +1,4 @@
+// @flow
 import React, { useState, useEffect } from 'react';
 import {
   Container,
@@ -11,14 +12,20 @@ import {
   CircularProgress,
   Stack,
   Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Collapse,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SiteVars } from '../../Data/constants';
-import { ITokens } from '../../Data/interfaces';
+import { useWordStore } from '../../Store/useWordStore';
 
 export interface WordItem {
   id?: number | string;
@@ -46,8 +53,8 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
-  const isTokenStr: string = localStorage.getItem('tokens') ?? '{}';
-  const tokens: ITokens = JSON.parse(isTokenStr);
+  const tokens = useWordStore((state) => state.tokens);
+
 
   const [title, setTitle] = useState<string>('');
   const [words, setWords] = useState<WordItem[]>([
@@ -63,6 +70,11 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [initialFetchLoading, setInitialFetchLoading] = useState<boolean>(!isNew);
   const [error, setError] = useState<string | null>(null);
+
+  // Import State
+  const [showImport, setShowImport] = useState<boolean>(false);
+  const [importText, setImportText] = useState<string>('');
+  const [separator, setSeparator] = useState<string>(';');
 
   // Load existing collection when editing
   useEffect(() => {
@@ -139,6 +151,45 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
     if (words.length === 1) return;
     const updatedWords = words.filter((_, i) => i !== index);
     setWords(updatedWords);
+  };
+
+  // Batch Import Handler
+  const handleImportWords = () => {
+    if (!importText.trim()) return;
+
+    const lines = importText.split('\n');
+    const newParsedWords: WordItem[] = [];
+
+    lines.forEach((line) => {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) return; // Skip empty lines
+
+      // Split line by chosen separator
+      const parts = trimmedLine.split(separator).map((p) => p.trim());
+      const word1 = parts[0] || '';
+      const word2 = parts[1] || '';
+
+      if (word1 || word2) {
+        newParsedWords.push({
+          id: crypto.randomUUID(),
+          tempId: crypto.randomUUID(),
+          translate1: word1,
+          translate2: word2,
+          translate3: '',
+        });
+      }
+    });
+
+    if (newParsedWords.length > 0) {
+      // Filter out empty initial field if it's untouched
+      const filteredExisting = words.filter(
+        (w) => w.translate1.trim() !== '' || w.translate2.trim() !== ''
+      );
+
+      setWords([...filteredExisting, ...newParsedWords]);
+      setImportText('');
+      setShowImport(false);
+    }
   };
 
   // Form Submission
@@ -239,9 +290,60 @@ export const NewCollection: React.FC<Props> = ({ isNew }) => {
             sx={{ mb: 4 }}
           />
 
-          <Typography variant="h6" fontWeight="medium" mb={2}>
-            Words & Translations
-          </Typography>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6" fontWeight="medium">
+              Words & Translations
+            </Typography>
+
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<FileUploadIcon />}
+              onClick={() => setShowImport((prev) => !prev)}
+            >
+              {showImport ? 'Hide Batch Import' : 'Batch Import'}
+            </Button>
+          </Box>
+
+          {/* Import Panel */}
+          <Collapse in={showImport}>
+            <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'action.hover' }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Paste text containing pairs of words (one pair per line):
+              </Typography>
+              <TextField
+                multiline
+                rows={4}
+                fullWidth
+                placeholder={`apple ; manzana\nhouse ; casa`}
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                sx={{ mb: 2, bgcolor: 'background.paper' }}
+              />
+              <Box display="flex" gap={2} alignItems="center">
+                <FormControl size="small" sx={{ minWidth: 150 }}>
+                  <InputLabel>Separator</InputLabel>
+                  <Select
+                    value={separator}
+                    label="Separator"
+                    onChange={(e) => setSeparator(e.target.value)}
+                  >
+                    <MenuItem value=";">Semicolon ( ; )</MenuItem>
+                    <MenuItem value="\t">Tab</MenuItem>
+                    <MenuItem value=",">Comma ( , )</MenuItem>
+                    <MenuItem value=":">Colon ( : )</MenuItem>
+                  </Select>
+                </FormControl>
+                <Button
+                  variant="contained"
+                  onClick={handleImportWords}
+                  disabled={!importText.trim()}
+                >
+                  Process & Add Words
+                </Button>
+              </Box>
+            </Paper>
+          </Collapse>
 
           <Stack spacing={2} mb={3}>
             {words.map((item, index) => (

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { ApiMemory } from '../../Data/ApiMemory';
-import { ITokens } from '../../Data/interfaces';
 import { emptyGameReport, IGameReport } from '../WordMemory/data';
 import { 
     Box, 
@@ -20,6 +19,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import EqualizerIcon from '@mui/icons-material/Equalizer';
 import { useNavigate } from 'react-router';
+import { useWordStore } from '../../Store/useWordStore';
 // Palette matching your main layout
 const palette = {
     matteBlue: '#3B82F6',
@@ -39,8 +39,10 @@ export default function WordReport(props: Props) {
     const navigate = useNavigate()
     // Instantiate memoized API call or keep instance inside component hook context
     const api = React.useMemo(() => new ApiMemory(), []);
-    const isTokenStr: string = localStorage.getItem('tokens') ?? '{}';
-    const tokens: ITokens = JSON.parse(isTokenStr);
+    const tokens = useWordStore((state) => state.tokens);
+    
+    
+    
 
     const closeClick = () => {
         props.showDialog();
@@ -48,7 +50,7 @@ export default function WordReport(props: Props) {
     };
 
     useEffect(() => {
-        api.RenderGameReport(tokens.accessToken)
+        api.RenderGameReport(tokens.accessToken??'')
             .then(res => {
                 setReport(res);
             })

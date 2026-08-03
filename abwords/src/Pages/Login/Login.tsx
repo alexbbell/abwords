@@ -1,5 +1,4 @@
 // @flow
-import * as React from 'react';
 import { Box, Container } from '@mui/material';
 import { Navigate } from 'react-router-dom';
 

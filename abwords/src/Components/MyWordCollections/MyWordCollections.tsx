@@ -28,7 +28,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useWordStore } from '../../Store/useWordStore';
 import { useNavigate } from 'react-router-dom';
 import { SiteVars } from '../../Data/constants';
-import { ITokens } from '../../Data/interfaces';
 
 export interface WordCollection {
   id: number;
@@ -51,8 +50,10 @@ export const MyWordCollections: React.FC = () => {
   const navigate = useNavigate();
   const { startLearning, viewCollection } = useWordStore();
 
-  const isTokenStr: string = localStorage.getItem('tokens') ?? '{}';
-  const tokens: ITokens = JSON.parse(isTokenStr);
+
+  
+  const tokens = useWordStore((state) => state.tokens);
+
 
   const API_URL = `${SiteVars.mainApiUrl}Word/collections`;
 
