@@ -15,7 +15,8 @@ import { ITokens } from '../../Data/interfaces';
 
 import WordReport from '../WordReport/WordReport';
 import { useAnswerStore } from '../../Store/answerSlice';
-import { useWordStore } from '../../Store/useWordStore';
+
+import { useParams } from 'react-router';
 
 // Define the specific matte color palette
 const palette = {
@@ -49,15 +50,15 @@ const quizButtonStyles = {
 
 type FeedbackColor = 'green' | 'red' | null;
 
-type Props = {
-    collectionId: number
-}
 
 
-export const WordMemory:React.FC<Props> = ( { collectionId } ) => {
+export const WordMemory:React.FC = () => {
     
-    
-    const selectedCollection = useWordStore((state) => state.selectedCollection);
+
+    const { id } = useParams<{ id: string }>();
+    const collectionId = parseInt(id??'0')
+
+    // const selectedCollection = useWordStore((state) => state.selectedCollection);
     
     const arFuncs = React.useMemo(() => new ArrayFuncs(), []);
     const api = React.useMemo(() => new ApiMemory(), []);
@@ -132,7 +133,7 @@ export const WordMemory:React.FC<Props> = ( { collectionId } ) => {
 
     const InitialWordLoad = async () => {
         try {
-            const res = await api.GetWordsFromCollection(selectedCollection?.id??2, tokens.accessToken);
+            const res = await api.GetWordsFromCollection(collectionId, tokens.accessToken);
             console.log('res', res)
             setItems(res.words);
             return res.words;
@@ -154,7 +155,7 @@ React.useEffect(() => {
 
     const initData = async () => {
         try {
-            const targetColId = selectedCollection?.id ?? collectionId ?? 2;
+            const targetColId = collectionId;
             const res = await api.GetWordsFromCollection(targetColId, tokens.accessToken);
             
             if (!isMounted) return;
@@ -187,7 +188,7 @@ React.useEffect(() => {
     return () => {
         isMounted = false; // Prevent state updates on unmounted components
     };
-}, [selectedCollection?.id, collectionId]);
+}, [collectionId]);
 
 const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[] => {
     const allVariants: IWordButton[] = [{ ...correctItem } as IWordButton];
@@ -312,7 +313,7 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
                     </Stack>
             <Container maxWidth="lg">
                 <Stack>
-                    You're exploring Word Collection '{selectedCollection?.title}' (#{selectedCollection?.id})
+                    You're exploring Word Collection  (#{collectionId})
                 </Stack>
             </Container>
 

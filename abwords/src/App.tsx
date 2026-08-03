@@ -25,6 +25,7 @@ function App() {
             <Route path="/edit/:id" element={<EditBlog isNew={false} />} />
             <Route path="/edit/new" element={<EditBlog isNew={true} />} />
             <Route path="/memory/" element={<WordMemPage />} />
+            <Route path="/memory/:id" element={<WordMemPage />} />
             <Route path="/signup/" element={<SignupPage />} />
           </Route>
         </Routes>

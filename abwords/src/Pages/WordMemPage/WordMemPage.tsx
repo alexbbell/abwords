@@ -12,7 +12,7 @@ export const WordMemPage = () => {
 
     return (
         <div>
-            <WordMemory collectionId={1} />
+            <WordMemory  />
         </div>
     );
 };

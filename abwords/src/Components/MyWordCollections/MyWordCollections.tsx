@@ -243,7 +243,7 @@ export const MyWordCollections: React.FC = () => {
                     sx={{ width: '50%' }}
                     onClick={() => {
                       startLearning(item);
-                      navigate('/memory');
+                      navigate(`/memory/${item.id}`);
                     }}
                     variant="contained"
                     disableElevation
