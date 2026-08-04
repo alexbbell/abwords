@@ -28,8 +28,8 @@ export const LoginForm = () => {
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
   
   const [apiError, setApiError] = React.useState<string | null>(null);
-  const [, setOpenForgot] = React.useState(false);
-  const [, setOpenRegister] = React.useState(false);
+  const [openForgot, setOpenForgot] = React.useState(false);
+  const [openRegister, setOpenRegister] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
   const handleClickForgotOpen = () => setOpenForgot(true);
@@ -189,7 +189,9 @@ export const LoginForm = () => {
           <Link
             component="button"
             type="button"
-            onClick={handleClickForgotOpen}
+            //onClick={handleClickForgotOpen}
+                        onClick={ () => navigate('/forgot')}
+
             variant="caption"
             underline="hover"
             sx={{ alignSelf: 'flex-end', mt: 0.8, color: '#4fc3f7' }}
