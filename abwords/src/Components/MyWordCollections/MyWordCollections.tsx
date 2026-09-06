@@ -18,6 +18,7 @@ import {
   DialogContentText,
   DialogActions,
   Tooltip,
+  Snackbar,
 } from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -47,17 +48,33 @@ export const MyWordCollections: React.FC = () => {
   const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<boolean>(false);
 
+  // Auth Toast State
+  const [toastOpen, setToastOpen] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>('');
+
   const navigate = useNavigate();
   const { startLearning, viewCollection } = useWordStore();
 
-
-  
-  const tokens = useWordStore((state) => state.tokens);
-
-
+  const accessToken = useWordStore((state) => state.tokens.accessToken);
+  const logout = useWordStore((state) => state.logout);
   const API_URL = `${SiteVars.mainApiUrl}Word/collections`;
 
+  const handleAuthError = (message: string) => {
+    setToastMessage(message || 'Session expired. Please log in again.');
+    setToastOpen(true);
+  };
+
+  const handleToastClose = () => {
+    setToastOpen(false);
+    navigate('/login'); // Redirect to login page upon closing or timeout
+  };
+
   useEffect(() => {
+    // 3. Guard against initial unhydrated/null token state
+    if (!accessToken) {
+      return; 
+    }
+
     const fetchCollections = async () => {
       try {
         setLoading(true);
@@ -66,11 +83,17 @@ export const MyWordCollections: React.FC = () => {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            logout(); // Clear invalid token state in store
+            const errResponse = await response.json().catch(() => null);
+            handleAuthError(errResponse?.message);
+            return;
+          }
           throw new Error(`Error ${response.status}: Failed to fetch word collections`);
         }
 
@@ -85,7 +108,7 @@ export const MyWordCollections: React.FC = () => {
     };
 
     fetchCollections();
-  }, []);
+  }, [accessToken]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -95,13 +118,11 @@ export const MyWordCollections: React.FC = () => {
     });
   };
 
-  // Open confirmation dialog
   const handleOpenDeleteDialog = (id: number) => {
     setSelectedCollectionId(id);
     setDeleteDialogOpen(true);
   };
 
-  // Close confirmation dialog
   const handleCloseDeleteDialog = () => {
     if (!deleting) {
       setDeleteDialogOpen(false);
@@ -109,7 +130,6 @@ export const MyWordCollections: React.FC = () => {
     }
   };
 
-  // Perform API Delete Call
   const handleConfirmDelete = async () => {
     if (!selectedCollectionId) return;
 
@@ -124,10 +144,15 @@ export const MyWordCollections: React.FC = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          const errResponse = await response.json().catch(() => null);
+          handleCloseDeleteDialog();
+          handleAuthError(errResponse?.message);
+          return;
+        }
         throw new Error(`Error ${response.status}: Failed to delete collection`);
       }
 
-      // Remove item from state
       setCollections((prev) => prev.filter((item) => item.id !== selectedCollectionId));
       handleCloseDeleteDialog();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -185,7 +210,6 @@ export const MyWordCollections: React.FC = () => {
             <Grid item xs={12} sm={6} key={item.id}>
               <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent sx={{ flexGrow: 1 }}>
-                  {/* Title and Action Buttons */}
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
                     <Typography variant="h6" component="h2" fontWeight="medium">
                       {item.title}
@@ -275,6 +299,18 @@ export const MyWordCollections: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Re-authentication Toast Notification */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={handleToastClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleToastClose} severity="warning" variant="filled" sx={{ width: '100%' }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

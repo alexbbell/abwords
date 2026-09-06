@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "builds": "tsc -b && vite build --silent",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "startAPI": "cd C:\\Projects\\AbbContentEditor\\AbbContentEditor\\bin\\Release\\net10.0\\ && AbbContentEditor.exe"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
