@@ -8,6 +8,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   FormControlLabel,
   IconButton,
   InputAdornment,
@@ -16,19 +17,28 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import './Logins.css';
 import { SiteVars } from '../../Data/constants';
 
 interface SignUpProps {
   open?: boolean;
-  host?: string; // Add your custom host here (e.g. "https://api.example.com")
+  host?: string;
   handleClose?: () => void;
   onSignUpSuccess?: (data: IFormRegister) => void;
+  redirectTo?: string; // Optional custom redirect URL (default "/")
 }
 
 interface IErrorDialog {
   open: boolean;
+  title: string;
   errorText: string;
+}
+
+interface ISuccessDialog {
+  open: boolean;
+  message: string;
 }
 
 interface IFormRegister {
@@ -48,14 +58,22 @@ const initialFormState: IFormRegister = {
 export default function SignUp({ 
   host = '', 
   handleClose, 
-  onSignUpSuccess 
+  onSignUpSuccess,
+  redirectTo = '/'
 }: SignUpProps) {
   const [formRegister, setFormRegister] = React.useState<IFormRegister>(initialFormState);
   const [touched, setTouched] = React.useState<{ [key: string]: boolean }>({});
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  
   const [errorDialog, setErrorDialog] = React.useState<IErrorDialog>({
     open: false,
+    title: 'Registration Error',
     errorText: '',
+  });
+
+  const [successDialog, setSuccessDialog] = React.useState<ISuccessDialog>({
+    open: false,
+    message: '',
   });
 
   // Toggle password visibilities
@@ -80,6 +98,23 @@ export default function SignUp({
     setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
+  // Close all dialogs and invoke parent close / redirect
+  const handleCloseSuccess = () => {
+    setSuccessDialog({ open: false, message: '' });
+
+    if (onSignUpSuccess) {
+      onSignUpSuccess(formRegister);
+    }
+
+    // 1. Close parent modal wrapper if handleClose is passed
+    if (handleClose) {
+      handleClose();
+    } else {
+      // 2. Fallback: redirect to start/home page
+      window.location.href = redirectTo;
+    }
+  };
+
   const isPasswordMismatch =
     formRegister.confirmPassword.length > 0 &&
     formRegister.password !== formRegister.confirmPassword;
@@ -98,6 +133,7 @@ export default function SignUp({
     if (!formRegister.agreeTerms) {
       setErrorDialog({
         open: true,
+        title: 'Validation Error',
         errorText: 'You must agree to the terms and conditions.',
       });
       return;
@@ -106,9 +142,6 @@ export default function SignUp({
     setIsSubmitting(true);
 
     try {
-      
-      // Ensure clean URL formatting
-      
       const endpoint = `${SiteVars.mainApiUrl}Account/RegisterUser`;
 
       const response = await fetch(endpoint, {
@@ -123,25 +156,44 @@ export default function SignUp({
         }),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        // Try to parse server error response if available
+        let errorTitle = 'Registration Failed';
         let errorMessage = 'Registration failed. Please try again.';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.title || errorMessage;
-        } catch {
-          // Fallback if response isn't JSON
+
+        if (responseData.title) {
+          errorTitle = responseData.title;
         }
-        throw new Error(errorMessage);
+
+        if (responseData.detail) {
+          errorMessage = responseData.detail;
+        } else if (responseData.errors) {
+          errorMessage = Object.values(responseData.errors)
+            .flat()
+            .join('\n');
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        }
+
+        setErrorDialog({
+          open: true,
+          title: errorTitle,
+          errorText: errorMessage,
+        });
+        return;
       }
 
       // Successful registration
-      if (onSignUpSuccess) {
-        onSignUpSuccess(formRegister);
-      }
+      setSuccessDialog({
+        open: true,
+        message: responseData.message || 'User registered successfully. Please check your email to confirm registration.',
+      });
+
     } catch (error) {
       setErrorDialog({
         open: true,
+        title: 'Network Error',
         errorText: error instanceof Error ? error.message : 'An unexpected error occurred.',
       });
     } finally {
@@ -290,11 +342,60 @@ export default function SignUp({
       {/* Error Alert Dialog */}
       <Dialog
         open={errorDialog.open}
-        onClose={() => setErrorDialog({ open: false, errorText: '' })}
+        onClose={() => setErrorDialog({ open: false, title: '', errorText: '' })}
       >
-        <DialogContent>{errorDialog.errorText}</DialogContent>
+        <DialogTitle>{errorDialog.title}</DialogTitle>
+        <DialogContent sx={{ whitespace: 'pre-line' }}>
+          {errorDialog.errorText}
+        </DialogContent>
         <DialogActions>
-          <Button onClick={() => setErrorDialog({ open: false, errorText: '' })}>
+          <Button onClick={() => setErrorDialog({ open: false, title: '', errorText: '' })}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success Modal Dialog */}
+      <Dialog
+        open={successDialog.open}
+        onClose={handleCloseSuccess}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ m: 0, p: 2, pr: 6, fontWeight: 600 }}>
+          Registration Successful
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseSuccess}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              py: 2,
+              gap: 2,
+            }}
+          >
+            <CheckCircleOutlineIcon color="success" sx={{ fontSize: 60 }} />
+            <Typography variant="body1">
+              {successDialog.message}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={handleCloseSuccess} autoFocus>
             Close
           </Button>
         </DialogActions>
