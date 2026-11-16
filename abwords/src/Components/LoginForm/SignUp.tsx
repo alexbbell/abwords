@@ -17,6 +17,7 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import './Logins.css';
+import { SiteVars } from '../../Data/constants';
 
 interface SignUpProps {
   open?: boolean;
@@ -107,8 +108,8 @@ export default function SignUp({
     try {
       
       // Ensure clean URL formatting
-      const baseUrl = host.endsWith('/') ? host.slice(0, -1) : host;
-      const endpoint = `${baseUrl}/Account/RegisterUser`;
+      
+      const endpoint = `${SiteVars.mainApiUrl}Account/RegisterUser`;
 
       const response = await fetch(endpoint, {
         method: 'POST',

@@ -55,6 +55,7 @@ export const MyWordCollections: React.FC = () => {
   const navigate = useNavigate();
   const { startLearning, viewCollection } = useWordStore();
 
+  //const tokens = useWordStore((state) => state.tokens);
   const accessToken = useWordStore((state) => state.tokens.accessToken);
   const logout = useWordStore((state) => state.logout);
   const API_URL = `${SiteVars.mainApiUrl}Word/collections`;
@@ -139,7 +140,7 @@ export const MyWordCollections: React.FC = () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${tokens.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 

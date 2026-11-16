@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Dialog from '@mui/material/Dialog';
+import FormControl from '@mui/material/FormControl';
 import { useNavigate } from 'react-router';
 
 import { emptyAuthParams, IAccount, ITokens } from '../../Data/interfaces';
@@ -47,8 +48,8 @@ export const LoginForm = () => {
   const [authRequest, setAuthRequest] = React.useState<IAccount>(emptyAuthParams);
   const [errors, setErrors] = React.useState<{ login?: string; password?: string }>({});
   const [apiError, setApiError] = React.useState<string | null>(null);
-  const [, setOpenForgot] = React.useState(false);
-  const [, setOpenRegister] = React.useState(false);
+  const [openForgot, setOpenForgot] = React.useState(false);
+  const [openRegister, setOpenRegister] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
   const validateInputs = (): boolean => {
@@ -157,35 +158,35 @@ export const LoginForm = () => {
             fullWidth
           />
 
-        {/* Password Field */}
-        <FormControl fullWidth>
-          <Typography variant="caption" sx={{ color: 'grey.300', mb: 0.5, fontWeight: 600 }}>
-            Password
-          </Typography>
-          <TextField
-            id="password"
-            name="password"
-            type="password"
-            variant="outlined"
-            size="small"
-            placeholder="••••••••"
-            value={authRequest.password}
-            onChange={(e) => handleInputChange('password', e.target.value)}
-            error={passwordError}
-            helperText={passwordErrorMessage}
-            sx={textFieldStyles}
-          />
-          <Link
-            component="button"
-            type="button"
-            onClick={handleClickForgotOpen}
-            variant="caption"
-            underline="hover"
-            sx={{ alignSelf: 'flex-end', mt: 0.8, color: '#4fc3f7' }}
-          >
-            Forgot your password?
-          </Link>
-        </FormControl>
+          {/* Password Field */}
+          <FormControl fullWidth>
+            <Typography variant="caption" sx={{ color: 'grey.300', mb: 0.5, fontWeight: 600 }}>
+              Password
+            </Typography>
+            <TextField
+              id="password"
+              name="password"
+              type="password"
+              variant="outlined"
+              size="small"
+              placeholder="••••••••"
+              value={authRequest.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              error={Boolean(errors.password)}
+              helperText={errors.password}
+              sx={textFieldStyles}
+            />
+            <Link
+              component="button"
+              type="button"
+              onClick={() => setOpenForgot(true)}
+              variant="caption"
+              underline="hover"
+              sx={{ alignSelf: 'flex-end', mt: 0.8, color: '#4fc3f7' }}
+            >
+              Forgot your password?
+            </Link>
+          </FormControl>
 
           {/* Submit Button */}
           <Button
