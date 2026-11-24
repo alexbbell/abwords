@@ -47,6 +47,7 @@ export const Header = () => {
   const items: Links[] = [
     { Key: 'khome', Title: 'Home', Url: '/', Role: 'all' },
     { Key: 'kdashboard', Title: 'Dashboard', Url: '/dashboard', Role: 'logged' },
+    { Key: 'kstatistics', Title: 'Statistics', Url: '/statistics', Role: 'logged' },
     { Key: 'klogin', Title: 'Login', Url: '/login', Role: 'anonym' },
     { Key: 'kabout', Title: 'About', Url: '/about', Role: 'all' },
     {

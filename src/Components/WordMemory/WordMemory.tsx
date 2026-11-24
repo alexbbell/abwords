@@ -1,6 +1,6 @@
 // @flow
 import * as React from 'react';
-import { IAnswer, IWord, IWordButton, WordEmpty } from './data';
+import { IAnswer, ISessionStats, IWord, IWordButton, WordEmpty } from './data';
 import Grid2 from '@mui/material/Grid2';
 import { ArrayFuncs } from './../../Helpers/ArrayFuncs'
 import Box from '@mui/material/Box';
@@ -72,6 +72,13 @@ export const WordMemory:React.FC = () => {
     const [items, setItems] = React.useState<IWord[]>([]);
     const [timerOut, setTimerOut] = React.useState(true);
     const [showDialog, setShowDialog] = React.useState(false);
+    const [stats, setStats] = React.useState<ISessionStats | null>(null);
+    const [statsError, setStatsError] = React.useState<string | null>(null);
+
+    // Refs, so the Countdown's onTimeOut callback never sees a stale session id
+    const sessionIdRef = React.useRef<number | null>(null);
+    const pendingSavesRef = React.useRef<Set<Promise<void>>>(new Set());
+    const finishingRef = React.useRef(false);
 
     const answers = useAnswerStore((state) => state.answers)
     const addItem = useAnswerStore((state) => state.addItem)
@@ -90,11 +97,41 @@ export const WordMemory:React.FC = () => {
         setShowDialog(false);
     }, []);
 
-    const handleTimeOut = () => {
+    /** Ends the exercise (button or timeout): stop the timer, flush answers, finish the session, show stats. */
+    const endSession = async () => {
+        if (finishingRef.current) return;
+        finishingRef.current = true;
+
         setTimerOut(true);
         setIsDisabled(true);
         setCntDown(null);
-        api.SetTimer(tokens.accessToken??'', 'stop').catch(() => {});
+        const token = tokens.accessToken ?? '';
+        api.SetTimer(token, 'stop').catch(() => {});
+
+        const sessionId = sessionIdRef.current;
+        if (sessionId == null) {
+            finishingRef.current = false;
+            return;
+        }
+
+        setStats(null);
+        setStatsError(null);
+        setShowDialog(true);
+        try {
+            // Make sure every answer reached the server before the session is closed
+            await Promise.allSettled([...pendingSavesRef.current]);
+            setStats(await api.FinishSession(token, sessionId));
+            sessionIdRef.current = null;
+        } catch (err) {
+            console.error('Failed to finish session', err);
+            setStatsError('Could not load the session statistics.');
+        } finally {
+            finishingRef.current = false;
+        }
+    };
+
+    const handleTimeOut = () => {
+        endSession();
     };
 
     const GetTimer = async (): Promise<string> => {
@@ -168,6 +205,12 @@ React.useEffect(() => {
             if (!isMounted) return;
 
             if (timerStatus === 'timeis' && loadedWords.length > 0) {
+                // Page was reloaded during a running exercise: continue the same session
+                const token = tokens.accessToken ?? '';
+                const active = await api.GetActiveSession(token, collectionId || null).catch(() => null)
+                    ?? await api.StartSession(token, collectionId || null);
+                if (!isMounted) return;
+                sessionIdRef.current = active.id;
                 SetWordCombination(loadedWords);
             } else {
                 setTimerOut(true);
@@ -230,11 +273,19 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
         newFeedback[index] = isCorrect ? 'green' : 'red';
         setButtonFeedback(newFeedback);
 
-        const newAnswer: IAnswer = { word: cWord, success: isCorrect };
+        const newAnswer: IAnswer = { word: cWord, selected: word, success: isCorrect };
+
+        // Save right away (not after the feedback delay) so ending the session can't lose it
+        const sessionId = sessionIdRef.current;
+        if (sessionId != null) {
+            const save = api.SaveAnswer(tokens.accessToken ?? '', sessionId, newAnswer)
+                .catch(err => console.error('Failed to save answer', err))
+                .finally(() => pendingSavesRef.current.delete(save));
+            pendingSavesRef.current.add(save);
+        }
 
         setTimeout(() => {
             addItem(newAnswer);
-            api.SaveHistory(tokens.accessToken??'', newAnswer);
             SetWordCombination(items);
             // Reset feedback for next word
             setButtonFeedback([null, null, null, null]);
@@ -244,7 +295,8 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
 
     const handleStart = async () => {
         try {
-            await api.DeleteWordHistory(tokens.accessToken??'');
+            const session = await api.StartSession(tokens.accessToken ?? '', collectionId || null);
+            sessionIdRef.current = session.id;
             const timerData = await api.SetTimer(tokens.accessToken??'', 'start');
             const newTime = timerData?.endTime || dayjs().add(5, 'minute').toISOString();
             const loadedWords = items.length > 0 ? items : await InitialWordLoad();
@@ -297,13 +349,7 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
                                     <Button 
                                         variant='contained' 
                                         size="large"
-                                        onClick={async () => {
-                                            await api.SetTimer(tokens.accessToken??'', 'stop');
-                                            setTimerOut(true);
-                                            setShowDialog(true);
-                                            
-                                            setCntDown(null);
-                                        }}
+                                        onClick={endSession}
                                         sx={{ bgcolor: palette.matteRed, '&:hover': { bgcolor: '#D32F2F' } }}
                                     >
                                         End Session
@@ -442,7 +488,7 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
                                             <TableRow key={index} hover>
                                                 <TableCell sx={{ color: palette.textSecondary }}>{answers.length - index}</TableCell>
                                                 <TableCell sx={{ color: palette.textPrimary, fontWeight: 500 }}>{a.word.translate1}</TableCell>
-                                                <TableCell sx={{ color: palette.textPrimary }}>{a.word.translate2}</TableCell>
+                                                <TableCell sx={{ color: palette.textPrimary }}>{a.selected?.translate2 ?? a.word.translate2}</TableCell>
                                                 <TableCell align="center">
                                                     {a.success ? (
                                                         <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
@@ -467,7 +513,7 @@ const fillAnswers2Choose = (correctItem: IWord, allItems: IWord[]): IWordButton[
             </Container>
 
             <Dialog open={showDialog} onClose={dialogClose} fullWidth maxWidth="sm">
-                <WordReport showDialog={dialogClose} />
+                <WordReport showDialog={dialogClose} stats={stats} error={statsError} />
             </Dialog>
         </Box>
     );

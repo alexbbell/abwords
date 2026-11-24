@@ -13,6 +13,7 @@ import NewCollection from './Pages/NewCollection/NewCollection';
 import About from './Pages/About/About';
 import { Profile } from './Pages/Profile/Profile';
 import ForgotPassword from './Pages/ForgotPassword/ForgotPassword';
+import StatisticsPage from './Pages/Statistics/StatisticsPage';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             <Route path="/edit/new" element={<EditBlog isNew={true} />} />
             <Route path="/memory/" element={<WordMemPage />} />
             <Route path="/memory/:id" element={<WordMemPage />} />
+            <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/about/" element={<About />} />
             <Route path="/profile/" element={<Profile />} />
             <Route path="/forgot/" element={<ForgotPassword />} />

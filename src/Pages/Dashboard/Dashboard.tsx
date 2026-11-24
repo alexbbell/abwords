@@ -5,12 +5,14 @@ import { useWordStore } from '../../Store/useWordStore';
 import { Box } from '@mui/material';
 import { mainBoxStyles } from '../../theme';
 import { LoginForm } from '../../Components/LoginForm/LoginForm';
+import CollectionWordsDialog from '../../Components/CollectionWords/CollectionWordsDialog';
 
 
 export const Dashboard = () => {
   const mode = useWordStore((state) => state.mode);
   const accessToken = useWordStore((state) => state.tokens?.accessToken);
   const selectedCollection = useWordStore((state) => state.selectedCollection);
+  const clearSelection = useWordStore((state) => state.clearSelection);
 
   // Early return if user is not authenticated
   if (!accessToken) {
@@ -29,12 +31,9 @@ export const Dashboard = () => {
 
         <MyWordCollections />
 
-        {/* View All Words View */}
+        {/* View All Words */}
         {mode === 'viewing' && selectedCollection && (
-          <div>
-            <h2>Viewing: {selectedCollection.title}</h2>
-            {/* Render word list component here */}
-          </div>
+          <CollectionWordsDialog collection={selectedCollection} onClose={clearSelection} />
         )}
         {/* <WordMemory collectionId={selectedCollection?.id??1}  /> */}
       </Box>

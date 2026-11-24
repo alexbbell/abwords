@@ -21,7 +21,81 @@ export interface IWordButton extends IWord {
 }
 export interface IAnswer {
     word: IWord,
+    /** The option the user clicked. */
+    selected?: IWord,
     success?: boolean,
+}
+
+export interface IExerciseSession {
+    id: number,
+    collectionId: number | null,
+    startedAt: string,
+    finishedAt: string | null,
+}
+
+export interface IWordStat {
+    wordId: string | null,
+    word: string,
+    correctAnswer: string | null,
+    attempts: number,
+    correct: number,
+    wrong: number,
+}
+
+export interface IExerciseAnswer {
+    id: number,
+    wordId: string | null,
+    word: string,
+    correctAnswer: string | null,
+    selectedAnswer: string | null,
+    correct: boolean,
+    answerTime: string,
+}
+
+export interface IExerciseOverview {
+    collectionId: number | null,
+    sessionCount: number,
+    totalAnswers: number,
+    correctAnswers: number,
+    wrongAnswers: number,
+    accuracy: number,
+    totalDurationSeconds: number,
+    lastSessionAt: string | null,
+    mostMistakenWords: IWordStat[],
+}
+
+export interface ISessionSummary {
+    sessionId: number,
+    collectionId: number | null,
+    startedAt: string,
+    finishedAt: string | null,
+    totalAnswers: number,
+    correctAnswers: number,
+    wrongAnswers: number,
+    accuracy: number,
+}
+
+export interface IPaged<T> {
+    totalCount: number,
+    pageNumber: number,
+    pageSize: number,
+    items: T[],
+}
+
+export interface ISessionStats {
+    sessionId: number,
+    collectionId: number | null,
+    user: string,
+    startedAt: string,
+    finishedAt: string | null,
+    isFinished: boolean,
+    durationSeconds: number,
+    totalAnswers: number,
+    correctAnswers: number,
+    wrongAnswers: number,
+    accuracy: number,
+    mistakenWords: IWordStat[],
+    answers: IExerciseAnswer[],
 }
 
 export interface IGameReport {

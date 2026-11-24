@@ -26,6 +26,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import { useWordStore } from '../../Store/useWordStore';
 import { useNavigate } from 'react-router-dom';
 import { SiteVars } from '../../Data/constants';
@@ -276,6 +277,16 @@ export const MyWordCollections: React.FC = () => {
                   >
                     Start Learning
                   </Button>
+
+                  <Tooltip title="Statistics">
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => navigate(`/statistics?collectionId=${item.id}`)}
+                    >
+                      <BarChartIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </CardActions>
               </Card>
             </Grid>
