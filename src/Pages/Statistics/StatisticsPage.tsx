@@ -10,7 +10,6 @@ import {
     Container,
     Dialog,
     FormControl,
-    Grid2,
     InputLabel,
     MenuItem,
     Paper,
@@ -56,16 +55,28 @@ const formatDuration = (totalSeconds: number): string => {
 const accuracyColor = (accuracy: number) =>
     accuracy >= 80 ? palette.matteGreen : accuracy >= 50 ? palette.matteOrange : palette.matteRed;
 
-const StatTile = ({ label, value, color = palette.textPrimary }: { label: string; value: React.ReactNode; color?: string }) => (
-    <Paper elevation={1} sx={{ p: 2.5, borderRadius: '12px', height: '100%' }}>
+type StatTileProps = { label: string; value: React.ReactNode; hint?: React.ReactNode; color?: string };
+
+const StatTile = ({ label, value, hint, color = palette.textPrimary }: StatTileProps) => (
+    <Paper elevation={1} sx={{ p: 2.5, borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <Typography variant="caption" sx={{ color: palette.textSecondary, fontWeight: 600, textTransform: 'uppercase' }}>
             {label}
         </Typography>
-        <Typography variant="h4" sx={{ fontWeight: 700, color, mt: 0.5 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, color, lineHeight: 1.2 }}>
             {value}
+        </Typography>
+        <Typography variant="body2" component="div" sx={{ color: palette.textSecondary, minHeight: '1.43em' }}>
+            {hint}
         </Typography>
     </Paper>
 );
+
+// Plain CSS grid: 2 tiles per row on phones, 4 on desktop
+const tilesGrid = {
+    display: 'grid',
+    gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
+    gap: 2,
+} as const;
 
 export const StatisticsPage: React.FC = () => {
     const accessToken = useWordStore((state) => state.tokens?.accessToken);
@@ -170,18 +181,31 @@ export const StatisticsPage: React.FC = () => {
                         <Typography variant="h4" component="h1" sx={{ color: palette.textPrimary, fontWeight: 700 }}>
                             Statistics
                         </Typography>
-                        <FormControl size="small" sx={{ minWidth: 240, bgcolor: '#FFF' }}>
-                            <InputLabel id="stats-collection-label">Collection</InputLabel>
+                        <FormControl size="small" sx={{ minWidth: 240 }}>
+                            {/* explicit colors: the app theme paints all labels magenta */}
+                            <InputLabel
+                                id="stats-collection-label"
+                                shrink
+                                sx={{ color: palette.textSecondary, bgcolor: palette.background, px: 0.5, '&.Mui-focused': { color: palette.matteBlue } }}
+                            >
+                                Collection
+                            </InputLabel>
                             <Select
                                 labelId="stats-collection-label"
                                 label="Collection"
+                                notched
+                                displayEmpty
                                 value={collectionId ? String(collectionId) : ''}
                                 onChange={(e) => changeCollection(e.target.value)}
+                                sx={{ bgcolor: '#FFF', color: palette.textPrimary }}
                             >
                                 <MenuItem value="">All collections</MenuItem>
                                 {collections.map(c => (
                                     <MenuItem key={c.id} value={String(c.id)}>{c.title}</MenuItem>
                                 ))}
+                                {collectionId && !collections.some(c => c.id === collectionId) && (
+                                    <MenuItem value={String(collectionId)}>Collection #{collectionId}</MenuItem>
+                                )}
                             </Select>
                         </FormControl>
                     </Stack>
@@ -202,34 +226,35 @@ export const StatisticsPage: React.FC = () => {
                     ) : overview && (
                         <>
                             {/* Overview tiles */}
-                            <Grid2 container spacing={2}>
-                                <Grid2 size={{ xs: 6, md: 3 }}>
-                                    <StatTile label="Sessions" value={overview.sessionCount} />
-                                </Grid2>
-                                <Grid2 size={{ xs: 6, md: 3 }}>
-                                    <StatTile label="Answers" value={overview.totalAnswers} />
-                                </Grid2>
-                                <Grid2 size={{ xs: 6, md: 3 }}>
-                                    <StatTile label="Accuracy" value={`${overview.accuracy}%`} color={accuracyColor(overview.accuracy)} />
-                                </Grid2>
-                                <Grid2 size={{ xs: 6, md: 3 }}>
-                                    <StatTile label="Time practiced" value={formatDuration(overview.totalDurationSeconds)} />
-                                </Grid2>
-                            </Grid2>
-
-                            <Stack direction="row" spacing={3} sx={{ color: palette.textSecondary, px: 1 }}>
-                                <Typography variant="body2">
-                                    <Box component="span" sx={{ color: palette.matteGreen, fontWeight: 600 }}>{overview.correctAnswers}</Box> correct
-                                </Typography>
-                                <Typography variant="body2">
-                                    <Box component="span" sx={{ color: palette.matteRed, fontWeight: 600 }}>{overview.wrongAnswers}</Box> wrong
-                                </Typography>
-                                {overview.lastSessionAt && (
-                                    <Typography variant="body2">
-                                        Last session {dayjs(overview.lastSessionAt).format('DD.MM.YYYY HH:mm')}
-                                    </Typography>
-                                )}
-                            </Stack>
+                            <Box sx={tilesGrid}>
+                                <StatTile
+                                    label="Sessions"
+                                    value={overview.sessionCount}
+                                    hint={overview.lastSessionAt && `Last: ${dayjs(overview.lastSessionAt).format('DD.MM.YYYY HH:mm')}`}
+                                />
+                                <StatTile
+                                    label="Answers"
+                                    value={overview.totalAnswers}
+                                    hint={
+                                        <>
+                                            <Box component="span" sx={{ color: palette.matteGreen, fontWeight: 600 }}>{overview.correctAnswers}</Box> correct
+                                            {' · '}
+                                            <Box component="span" sx={{ color: palette.matteRed, fontWeight: 600 }}>{overview.wrongAnswers}</Box> wrong
+                                        </>
+                                    }
+                                />
+                                <StatTile
+                                    label="Accuracy"
+                                    value={`${overview.accuracy}%`}
+                                    color={accuracyColor(overview.accuracy)}
+                                    hint="of all answers"
+                                />
+                                <StatTile
+                                    label="Time practiced"
+                                    value={formatDuration(overview.totalDurationSeconds)}
+                                    hint={overview.sessionCount > 0 && `≈ ${formatDuration(overview.totalDurationSeconds / overview.sessionCount)} per session`}
+                                />
+                            </Box>
 
                             {/* Most mistaken words */}
                             <Box>
