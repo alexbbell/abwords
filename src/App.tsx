@@ -14,6 +14,8 @@ import About from './Pages/About/About';
 import { Profile } from './Pages/Profile/Profile';
 import ForgotPassword from './Pages/ForgotPassword/ForgotPassword';
 import StatisticsPage from './Pages/Statistics/StatisticsPage';
+import ConfirmEmail from './Pages/ConfirmEmail/ConfirmEmail';
+import ResetPassword from './Pages/ResetPassword/ResetPassword';
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
             <Route path="/profile/" element={<Profile />} />
             <Route path="/forgot/" element={<ForgotPassword />} />
             <Route path="/signup/" element={<SignupPage />} />
+            <Route path="/confirm-email" element={<ConfirmEmail />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
         </Routes>
       </ThemeProvider>
